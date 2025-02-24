@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import AdminNav from "../components/AdminNav"
-
+import AdminSidebar from "../components/AdminSidebar"
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({ siteName: "", logo: "", primaryColor: "" })
@@ -25,7 +24,7 @@ export default function AdminSettings() {
         if (data) setSettings(data)
       })
       .catch(() => navigate("/login"))
-  }, [])
+  }, [navigate]) // 🔹 Ajout de `navigate` en dépendance pour éviter un warning
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -38,50 +37,54 @@ export default function AdminSettings() {
     })
 
     if (response.ok) {
-      setMessage("Mise à jour réussie !")
+      setMessage("✅ Mise à jour réussie !")
     } else {
-      setMessage("Erreur lors de la mise à jour.")
+      setMessage("❌ Erreur lors de la mise à jour.")
     }
   }
 
   return (
-    <div>
-        <AdminNav />
-        <div className="container mt-5">
-            <h2>Paramètres du site</h2>
-            {message && <p className="text-success">{message}</p>}
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                <label>Nom du site</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={settings.siteName}
-                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                />
-                </div>
-                <div className="mb-3">
-                <label>Logo (URL)</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={settings.logo}
-                    onChange={(e) => setSettings({ ...settings, logo: e.target.value })}
-                />
-                </div>
-                <div className="mb-3">
-                <label>Couleur principale</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={settings.primaryColor}
-                    onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                />
-                </div>
-                <button type="submit" className="btn btn-primary">Enregistrer</button>
-            </form>
-        </div>
+    <div className="d-flex">
+      <AdminSidebar />
+      <div className="container mt-5" style={{ marginLeft: "260px" }}>
+        <h2>⚙️ Paramètres du site</h2>
+        {message && <p className={message.startsWith("✅") ? "text-success" : "text-danger"}>{message}</p>}
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label>Nom du site</label>
+            <input
+              type="text"
+              className="form-control"
+              value={settings.siteName || ""}
+              onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label>Logo (URL)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={settings.logo || ""}
+              onChange={(e) => setSettings({ ...settings, logo: e.target.value })}
+            />
+          </div>
+
+          <div className="mb-3">
+            <label>Couleur principale</label>
+            <input
+              type="text"
+              className="form-control"
+              value={settings.primaryColor || ""}
+              onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary">💾 Enregistrer</button>
+        </form>
+      </div>
     </div>
-   
   )
 }

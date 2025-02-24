@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import Login from "./pages/Login"
 import Admin from "./pages/Admin"
 import AdminSettings from "./pages/AdminSettings"
+import AdminPages from "./pages/AdminPages"
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/pages" element={<AdminPages />} />
       </Routes>
     </Router>
   )

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import AdminNav from "../components/AdminNav"
-
+import { useNavigate, Link } from "react-router-dom"
+import AdminSidebar from "../components/AdminSidebar"
 
 export default function Admin() {
   const [message, setMessage] = useState("")
@@ -12,7 +11,7 @@ export default function Admin() {
     const role = localStorage.getItem("role")
 
     if (!token || role !== "admin") {
-      navigate("/login") // Redirection si pas admin
+      navigate("/login") // 🔹 Redirige si l'utilisateur n'est pas admin
     } else {
       fetch("http://localhost:5000/api/admin", {
         headers: { Authorization: `Bearer ${token}` }
@@ -21,27 +20,32 @@ export default function Admin() {
         .then(data => setMessage(data.message))
         .catch(() => navigate("/login"))
     }
-  }, [])
+  }, [navigate]) // 🔹 Ajoute `navigate` pour éviter un bug de dépendance
 
   return (
-    <div>
-        <AdminNav />
-        <div className="container mt-5">
-            <h1>{message}</h1>
-            <nav className="mt-4">
-                <ul className="list-unstyled">
-                <li>
-                    <a href="/admin/settings" className="btn btn-primary">Gérer les paramètres</a>
-                </li>
-                </ul>
-            </nav>
-            <button className="btn btn-danger" onClick={() => {
-                localStorage.removeItem("token")
-                localStorage.removeItem("role")
-                navigate("/login")
-            }}>Déconnexion</button>
-        </div>
-    </div>
+    <div className="d-flex">
+      <AdminSidebar />
+      <div className="container mt-5" style={{ marginLeft: "260px" }}>
+        <h1>{message}</h1>
+        
+        {/* Utilisation de Link au lieu de <a href> */}
+        <nav className="mt-4">
+          <ul className="list-unstyled">
+            <li>
+              <Link to="/admin/settings" className="btn btn-primary">⚙️ Gérer les paramètres</Link>
+            </li>
+          </ul>
+        </nav>
 
+        {/* Bouton Déconnexion */}
+        <button className="btn btn-danger mt-3" onClick={() => {
+          localStorage.removeItem("token")
+          localStorage.removeItem("role")
+          navigate("/login")
+        }}>
+          🚪 Déconnexion
+        </button>
+      </div>
+    </div>
   )
 }

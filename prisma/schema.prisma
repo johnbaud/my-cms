@@ -30,4 +30,22 @@ model Settings {
   createdAt  DateTime @default(now())
 }
 
+model Page {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+  blocks    Block[]
+}
+
+model Block {
+  id        Int      @id @default(autoincrement())
+  type      String   // ex: "text", "image", "video", "button"
+  content   String   // Stocke le JSON des paramètres du bloc
+  order     Int
+  pageId    Int
+  page      Page     @relation(fields: [pageId], references: [id])
+}
+
 
