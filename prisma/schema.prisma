@@ -40,12 +40,13 @@ model Page {
 }
 
 model Block {
-  id        Int      @id @default(autoincrement())
-  type      String   // ex: "text", "image", "video", "button"
-  content   String   // Stocke le JSON des paramètres du bloc
-  order     Int
-  pageId    Int
-  page      Page     @relation(fields: [pageId], references: [id])
+  id      Int    @id @default(autoincrement())
+  type    String
+  content String
+  order   Int
+  pageId  Int
+  page    Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
+
 
 

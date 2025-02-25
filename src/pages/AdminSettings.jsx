@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import AdminSidebar from "../components/AdminSidebar"
+import { Settings, Save } from "lucide-react"
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({ siteName: "", logo: "", primaryColor: "" })
@@ -47,7 +48,7 @@ export default function AdminSettings() {
     <div className="d-flex">
       <AdminSidebar />
       <div className="container mt-5" style={{ marginLeft: "260px" }}>
-        <h2>⚙️ Paramètres du site</h2>
+        <h2><Settings size={24} className="me-2" /> Paramètres du site</h2>
         {message && <p className={message.startsWith("✅") ? "text-success" : "text-danger"}>{message}</p>}
         
         <form onSubmit={handleSubmit}>
@@ -82,7 +83,9 @@ export default function AdminSettings() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary">💾 Enregistrer</button>
+          <button type="submit" className="btn btn-primary">
+            <Save size={20} className="me-2" /> Enregistrer
+          </button>
         </form>
       </div>
     </div>

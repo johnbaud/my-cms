@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import AdminSidebar from "../components/AdminSidebar"
+import { FileText, Plus, Edit, Trash2 } from "lucide-react"
 
 export default function AdminPages() {
   const [pages, setPages] = useState([])
@@ -39,11 +40,31 @@ export default function AdminPages() {
     }
   }
 
+  const handleDeletePage = async (pageId) => {
+    const token = localStorage.getItem("token")
+  
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette page ? Cette action est irréversible.")) {
+      return
+    }
+  
+    const response = await fetch(`http://localhost:5000/api/pages/${pageId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  
+    if (response.ok) {
+      setPages(pages.filter(page => page.id !== pageId)) // 🔹 Met à jour l'affichage
+    } else {
+      const errorData = await response.json().catch(() => ({ message: "Erreur inconnue" }))
+      console.log("❌ Erreur API :", errorData)
+    }
+  }
+  
   return (
     <div className="d-flex">
       <AdminSidebar />
       <div className="container mt-5" style={{ marginLeft: "260px" }}>
-        <h2>📄 Gestion des pages</h2>
+      <h2><FileText size={24} className="me-2" /> Gestion des pages</h2>
         {message && <p className={message.startsWith("✅") ? "text-success" : "text-danger"}>{message}</p>}
 
         {/* Formulaire de création */}
@@ -56,16 +77,23 @@ export default function AdminPages() {
             <label>Slug (URL)</label>
             <input type="text" className="form-control" value={slug} onChange={(e) => setSlug(e.target.value)} required />
           </div>
-          <button type="submit" className="btn btn-primary">➕ Ajouter la page</button>
+          <button type="submit" className="btn btn-primary">
+            <Plus size={20} className="me-2" /> Ajouter la page
+          </button>
         </form>
 
         {/* Liste des pages */}
-        <h3>📑 Pages existantes</h3>
+        <h3><FileText size={20} className="me-2" /> Pages existantes</h3>
         <ul className="list-group">
           {pages.map(page => (
             <li key={page.id} className="list-group-item d-flex justify-content-between align-items-center">
               {page.title} ({page.slug})
-              <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm">🛠️ Modifier</Link>
+              <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm" title="Modifier">
+                <Edit size={16} className="me-1" />
+              </Link>
+              <button className="btn btn-danger btn-sm" onClick={() => handleDeletePage(page.id)} title="Supprimer">
+                <Trash2 size={16} className="me-1" />
+              </button>
             </li>
           ))}
         </ul>

@@ -8,6 +8,8 @@ import Login from "./pages/Login"
 import Admin from "./pages/Admin"
 import AdminSettings from "./pages/AdminSettings"
 import AdminPages from "./pages/AdminPages"
+import AdminPageEditor from "./pages/AdminPageEditor"
+
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/pages" element={<AdminPages />} />
+        <Route path="/admin/pages/:pageId" element={<AdminPageEditor />} />
+
       </Routes>
     </Router>
   )

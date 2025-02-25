@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import AdminSidebar from "../components/AdminSidebar"
+import { Home, Settings, FileText, LogOut } from "lucide-react"
 
 export default function Admin() {
   const [message, setMessage] = useState("")
@@ -32,7 +33,14 @@ export default function Admin() {
         <nav className="mt-4">
           <ul className="list-unstyled">
             <li>
-              <Link to="/admin/settings" className="btn btn-primary">⚙️ Gérer les paramètres</Link>
+              <Link to="/admin/settings" className="btn btn-primary">
+                <Settings size={20} className="me-2" /> Gérer les paramètres
+              </Link>
+            </li>
+            <li className="mt-2">
+              <Link to="/admin/pages" className="btn btn-success">
+                <FileText size={20} className="me-2" /> Gérer les pages
+              </Link>
             </li>
           </ul>
         </nav>
@@ -43,7 +51,7 @@ export default function Admin() {
           localStorage.removeItem("role")
           navigate("/login")
         }}>
-          🚪 Déconnexion
+          <LogOut size={20} className="me-2" /> Déconnexion
         </button>
       </div>
     </div>
