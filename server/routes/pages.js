@@ -16,6 +16,18 @@ router.get("/", async (req, res) => {
   }
 })
 
+router.get("/public", async (req, res) => {
+  try {
+    const pages = await prisma.page.findMany({
+      select: { id: true, title: true, slug: true }
+    })
+    res.json(pages)
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération des pages :", error)
+    res.status(500).json({ message: "Erreur serveur." })
+  }
+})
+
 // 🔹 Créer une nouvelle page
 router.post("/", verifyToken, isAdmin, async (req, res) => {
   const { title, slug } = req.body

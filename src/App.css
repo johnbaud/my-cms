@@ -1,8 +1,14 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+} */
+#root {
+  max-width: 100%; /* 🔹 Remplace 1280px par 100% */
+  margin: 0;
+  padding: 0;
+  text-align: left; /* 🔹 Évite de centrer tout le texte */
 }
 
 .logo {

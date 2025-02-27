@@ -33,7 +33,7 @@ model Settings {
 model Page {
   id        Int      @id @default(autoincrement())
   title     String
-  slug      String   @unique
+  slug      String   @unique  @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
   blocks    Block[]

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `page` MODIFY `slug` VARCHAR(191) NOT NULL DEFAULT '';

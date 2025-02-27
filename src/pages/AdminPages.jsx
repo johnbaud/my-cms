@@ -89,10 +89,10 @@ export default function AdminPages() {
             <li key={page.id} className="list-group-item d-flex justify-content-between align-items-center">
               {page.title} ({page.slug})
               <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm" title="Modifier">
-                <Edit size={16} className="me-1" />
+                <Edit size={16}/>
               </Link>
               <button className="btn btn-danger btn-sm" onClick={() => handleDeletePage(page.id)} title="Supprimer">
-                <Trash2 size={16} className="me-1" />
+                <Trash2 size={16}/>
               </button>
             </li>
           ))}
