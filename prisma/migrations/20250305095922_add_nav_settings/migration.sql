@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `settings` ADD COLUMN `navAlignment` VARCHAR(191) NOT NULL DEFAULT 'left',
+    ADD COLUMN `navBgColor` VARCHAR(191) NOT NULL DEFAULT '#ffffff',
+    ADD COLUMN `navHeight` INTEGER NOT NULL DEFAULT 40;

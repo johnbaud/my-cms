@@ -27,7 +27,19 @@ model Settings {
   siteName   String
   logo       String?   // Stockera l'URL du logo
   primaryColor String? // Couleur principale
+
+    // 🔹 Navigattion
+  showLogo     Boolean @default(true)     
+  showSiteName Boolean @default(true)     
+  navAlignment String  @default("left")   
+  navHeight    Int     @default(40)       
+  navBgColor   String  @default("#ffffff")
   createdAt  DateTime @default(now())
+
+    // 🔹 Footer
+  footerBgColor  String  @default("#000000")
+  footerAlignment String @default("center")
+  showFooterLinks Boolean @default(false)
 }
 
 model Page {
@@ -48,5 +60,18 @@ model Block {
   page    Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
 
+model NavigationLink {
+  id        Int     @id @default(autoincrement())
+  label     String  // Nom du lien
+  type      String  // "internal", "external", "dropdown"
+  url       String? // URL si lien externe
+  pageId    Int?    // ID de la page si lien interne
+  parentId  Int?    // Null si c'est un lien normal, sinon ID du parent si c'est un sous-menu
+  position  Int     // Ordre d'affichage
+  location  String  // "navbar" ou "footer"
+
+  parent    NavigationLink? @relation("ParentChildLinks", fields: [parentId], references: [id])
+  children  NavigationLink[] @relation("ParentChildLinks")
+}
 
 
