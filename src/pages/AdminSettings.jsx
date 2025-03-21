@@ -1,77 +1,104 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import AdminSidebar from "../components/AdminSidebar"
-import { Settings, Save, Trash2 } from "lucide-react"
-import AdminSettingsTabs from "../components/AdminSettingsTabs" // 🔹 Nouveau nom
-import { Tab } from "react-bootstrap"
-import NavbarPreview from "../components/NavbarPreview"
-import FooterPreview from "../components/FooterPreview"
-import NavigationLinksManager from "../components/NavigationLinksManager"
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AdminSidebar from "../components/AdminSidebar";
+import { Settings, Save, Trash2 } from "lucide-react";
+import AdminSettingsTabs from "../components/AdminSettingsTabs"; // 🔹 Gère les onglets
+import { Tab } from "react-bootstrap";
+import CustomNavbar from "../components/Navbar"; // ✅ Navbar réelle utilisée
+import Footer from "../components/Footer"; // ✅ Footer réel utilisé
+import NavigationLinksManager from "../components/NavigationLinksManager";
 
 export default function AdminSettings() {
-  const [settings, setSettings] = useState({ siteName: "Mon Site", logo: "", primaryColor: "#ffffff" })
-  const [message, setMessage] = useState("")
-  const [logoFile, setLogoFile] = useState(null) 
-  const navigate = useNavigate()
+  const [settings, setSettings] = useState({
+    siteName: "Mon Site",
+    logo: "",
+    primaryColor: "#ffffff",
+    showLogo: true,
+    showSiteName: true,
+    navAlignment: "left",
+    navHeight: 40,
+    navBgColor: "#ffffff",
+    navTextColor: "#000000",
+    footerBgColor: "#000000",
+    footerTextColor: "#ffffff",
+    footerAlignment: "center",
+    showFooterLinks: true
+  });
+
+  const [message, setMessage] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
+  const navigate = useNavigate();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [navLinks, setNavLinks] = useState([]);
+  const [footerLinks, setFooterLinks] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     fetch("http://localhost:5000/api/admin/settings", {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => {
-        if (data) setSettings(data)
+        if (data) setSettings(data);
       })
-      .catch(() => navigate("/login"))
-  }, [navigate])
+      .catch(() => navigate("/login"));
+
+    // 🔹 Chargement des liens de navigation et du footer
+    fetch("http://localhost:5000/api/navigation/navbar")
+      .then(res => res.json())
+      .then(data => setNavLinks(data))
+      .catch(() => console.error("❌ Erreur chargement navigation"));
+
+    fetch("http://localhost:5000/api/navigation/footer")
+      .then(res => res.json())
+      .then(data => setFooterLinks(data))
+      .catch(() => console.error("❌ Erreur chargement footer"));
+  }, [navigate, refreshTrigger]);
 
   const handleFileChange = (e) => {
-    setLogoFile(e.target.files[0])
-  }
+    setLogoFile(e.target.files[0]);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const token = localStorage.getItem("token")
-    const formData = new FormData()
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
 
-    formData.append("siteName", settings.siteName)
-    formData.append("primaryColor", settings.primaryColor)
-    if (logoFile) formData.append("logo", logoFile)
-    formData.append("showLogo", settings.showLogo)
-    formData.append("showSiteName", settings.showSiteName)
-    formData.append("navAlignment", settings.navAlignment)
-    formData.append("navHeight", settings.navHeight) // Pas besoin de parseInt ici, c'est géré par le back
-    formData.append("navBgColor", settings.navBgColor)
+    Object.keys(settings).forEach((key) => {
+      formData.append(key, settings[key]);
+    });
+
+    if (logoFile) formData.append("logo", logoFile);
+
     const response = await fetch("http://localhost:5000/api/admin/settings", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData
-    })
+    });
 
     if (response.ok) {
-      setMessage("Paramètres mis à jour avec succès !")
+      setMessage("Paramètres mis à jour avec succès !");
+      setRefreshTrigger((t) => t + 1);
     } else {
-      setMessage("Erreur lors de la mise à jour.")
+      setMessage("Erreur lors de la mise à jour.");
     }
-  }
+  };
 
   const handleDeleteLogo = async () => {
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     const response = await fetch("http://localhost:5000/api/admin/settings/logo", {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` }
-    })
-  
-    const data = await response.json()
+    });
+
+    const data = await response.json();
     if (response.ok) {
-      setSettings(prev => ({ ...prev, logo: data.logo }))
-      setMessage("Logo supprimé avec succès.")
+      setSettings((prev) => ({ ...prev, logo: data.logo }));
+      setMessage("Logo supprimé avec succès.");
     } else {
-      setMessage("Erreur lors de la suppression du logo.")
+      setMessage("Erreur lors de la suppression du logo.");
     }
-  }
+  };
 
   return (
     <div className="d-flex">
@@ -83,6 +110,7 @@ export default function AdminSettings() {
         <AdminSettingsTabs>
           {(activeTab) => (
             <>
+              {/* 🔹 Onglet Général */}
               <Tab.Pane eventKey="general">
                 <form onSubmit={handleSubmit} encType="multipart/form-data">
                   <div className="mb-3">
@@ -118,9 +146,7 @@ export default function AdminSettings() {
 
                   <div className="mb-3">
                     <label>Couleur principale</label>
-                    <input
-                      type="color"
-                      className="form-control form-control-color"
+                    <input type="color" className="form-control form-control-color"
                       value={settings.primaryColor}
                       onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
                     />
@@ -132,8 +158,9 @@ export default function AdminSettings() {
                 </form>
               </Tab.Pane>
 
+              {/* 🔹 Onglet Navigation */}
               <Tab.Pane eventKey="navigation">
-                <NavbarPreview settings={settings} />
+                <CustomNavbar settings={settings} navLinks={navLinks} />
                 <form onSubmit={handleSubmit}>
                   
                   {/* Afficher/Masquer le logo */}
@@ -216,17 +243,28 @@ export default function AdminSettings() {
                     />
                   </div>
 
+                  {/* Couleur de texte */}
+                  <div className="mb-3">
+                    <label>Couleur du texte</label>
+                    <input 
+                      type="color" 
+                      className="form-control form-control-color"
+                      value={settings.navTextColor} 
+                      onChange={(e) => setSettings({ ...settings, navTextColor: e.target.value })} 
+                    />
+                  </div>
+
                   <button type="submit" className="btn btn-primary">
                     Enregistrer les paramètres
                   </button>
                 </form>
-                <NavigationLinksManager location="navbar" />
+                <NavigationLinksManager location="navbar" onUpdate={() => setRefreshTrigger(t => t + 1)} />
               </Tab.Pane>
 
-
+              {/* 🔹 Onglet Footer */}
               <Tab.Pane eventKey="footer">
-                <FooterPreview settings={settings} />
-
+                <Footer settings={settings} footerLinks={footerLinks} />
+                
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label>Couleur de fond</label>
@@ -235,6 +273,16 @@ export default function AdminSettings() {
                       className="form-control form-control-color"
                       value={settings.footerBgColor}
                       onChange={(e) => setSettings({ ...settings, footerBgColor: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label>Couleur du texte</label>
+                    <input 
+                      type="color" 
+                      className="form-control form-control-color"
+                      value={settings.footerTextColor} 
+                      onChange={(e) => setSettings({ ...settings, footerTextColor: e.target.value })} 
                     />
                   </div>
 
@@ -259,9 +307,10 @@ export default function AdminSettings() {
 
                   <button type="submit" className="btn btn-primary">Enregistrer</button>
                 </form>
-                <NavigationLinksManager location="footer" />
+                <NavigationLinksManager location="footer" onUpdate={() => setRefreshTrigger(t => t + 1)} />
               </Tab.Pane>
 
+              {/* 🔹 Onglet Formulaires */}
               <Tab.Pane eventKey="forms">
                 <p>⚙️ Ici on va gérer les formulaires.</p>
               </Tab.Pane>
@@ -270,5 +319,5 @@ export default function AdminSettings() {
         </AdminSettingsTabs>
       </div>
     </div>
-  )
+  );
 }

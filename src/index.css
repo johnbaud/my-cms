@@ -68,3 +68,14 @@ button:focus-visible {
 main {
   width: 100%;
 }
+.dropdown-menu.show {
+  background-color: var(--nav-bg-color);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.custom-dropdown .dropdown-toggle {
+  color: var(--nav-text-color);
+}
+.navbar-expand-lg .navbar-collapse{
+  flex-grow: 0;
+}

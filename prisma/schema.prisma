@@ -23,32 +23,35 @@ model User {
 }
 
 model Settings {
-  id         Int     @id @default(autoincrement())
-  siteName   String
-  logo       String?   // Stockera l'URL du logo
+  id           Int     @id @default(autoincrement())
+  siteName     String
+  logo         String? // Stockera l'URL du logo
   primaryColor String? // Couleur principale
 
-    // 🔹 Navigattion
-  showLogo     Boolean @default(true)     
-  showSiteName Boolean @default(true)     
-  navAlignment String  @default("left")   
-  navHeight    Int     @default(40)       
-  navBgColor   String  @default("#ffffff")
-  createdAt  DateTime @default(now())
+  // 🔹 Navigattion
+  showLogo     Boolean  @default(true)
+  showSiteName Boolean  @default(true)
+  navAlignment String   @default("left")
+  navHeight    Int      @default(40)
+  navBgColor   String   @default("#ffffff")
+  navTextColor     String  @default("#000000")
+  createdAt    DateTime @default(now())
 
-    // 🔹 Footer
-  footerBgColor  String  @default("#000000")
-  footerAlignment String @default("center")
+  // 🔹 Footer
+  footerBgColor   String  @default("#000000")
+  footerTextColor  String  @default("#ffffff")
+  footerAlignment String  @default("center")
   showFooterLinks Boolean @default(false)
 }
 
 model Page {
-  id        Int      @id @default(autoincrement())
-  title     String
-  slug      String   @unique  @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt()
-  blocks    Block[]
+  id              Int              @id @default(autoincrement())
+  title           String
+  slug            String           @unique @default("")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt()
+  blocks          Block[]
+  navigationLinks NavigationLink[]
 }
 
 model Block {
@@ -61,17 +64,18 @@ model Block {
 }
 
 model NavigationLink {
-  id        Int     @id @default(autoincrement())
-  label     String  // Nom du lien
-  type      String  // "internal", "external", "dropdown"
-  url       String? // URL si lien externe
-  pageId    Int?    // ID de la page si lien interne
-  parentId  Int?    // Null si c'est un lien normal, sinon ID du parent si c'est un sous-menu
-  position  Int     // Ordre d'affichage
-  location  String  // "navbar" ou "footer"
+  id       Int     @id @default(autoincrement())
+  label    String // Nom du lien
+  type     String // "internal", "external", "dropdown"
+  url      String? // URL si lien externe
+  pageId   Int? // ID de la page si lien interne
+  parentId Int? // Null si c'est un lien normal, sinon ID du parent si c'est un sous-menu
+  position Int // Ordre d'affichage
+  location String // "navbar" ou "footer"
 
-  parent    NavigationLink? @relation("ParentChildLinks", fields: [parentId], references: [id])
-  children  NavigationLink[] @relation("ParentChildLinks")
+  parent   NavigationLink?  @relation("ParentChildLinks", fields: [parentId], references: [id])
+  children NavigationLink[] @relation("ParentChildLinks")
+  page     Page?            @relation(fields: [pageId], references: [id], onDelete: SetNull)
+
+  @@unique([parentId, position]) // Assure que les positions sont uniques par parent
 }
-
-

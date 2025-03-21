@@ -39,8 +39,10 @@ router.get("/", verifyToken, isAdmin, async (req, res) => {
       navAlignment: settings?.navAlignment || "left",
       navHeight: settings?.navHeight || 40,
       navBgColor: settings?.navBgColor || "#ffffff",
+      navTextColor: settings?.navTextColor || "#000000",
         // 🔹 Footer
       footerBgColor: settings?.footerBgColor || "#000000",
+      footerTextColor: settings?.footerTextColor || "#ffffff",
       footerAlignment: settings?.footerAlignment || "center",
       showFooterLinks: settings?.showFooterLinks ?? true
     })
@@ -54,12 +56,11 @@ router.get("/", verifyToken, isAdmin, async (req, res) => {
 // 🔹 Modifier les paramètres globaux (avec upload du logo)
 router.post("/", verifyToken, isAdmin, upload.single("logo"), async (req, res) => {
   console.log("📩 Données reçues :", req.body)
-  const { siteName, primaryColor, showLogo, showSiteName, navAlignment, navHeight, navBgColor, footerBgColor, footerAlignment, showFooterLinks } = req.body
+  const { siteName, primaryColor, showLogo, showSiteName, navAlignment, navHeight, navBgColor, navTextColor, footerBgColor, footerTextColor, footerAlignment, showFooterLinks } = req.body
   const logo = req.file ? `/uploads/${req.file.filename}` : undefined // 🔹 Stocke le logo si un fichier est uploadé
 
   try {
     let settings = await prisma.settings.findFirst()
-
     if (settings) {
       settings = await prisma.settings.update({
         where: { id: settings.id },
@@ -73,8 +74,10 @@ router.post("/", verifyToken, isAdmin, upload.single("logo"), async (req, res) =
           navAlignment,
           navHeight: parseInt(navHeight), // 🔹 Convertir en nombre
           navBgColor,
+          navTextColor,
           // 🔹 Footer
           footerBgColor,
+          footerTextColor,
           footerAlignment,
           showFooterLinks: showFooterLinks === "true"
         }
@@ -91,8 +94,10 @@ router.post("/", verifyToken, isAdmin, upload.single("logo"), async (req, res) =
           navAlignment: "left",
           navHeight: 40,
           navBgColor: "#ffffff",
+          navTextColor: "#000000",
           // 🔹 Footer
           footerBgColor: "#000000",
+          footerTextColor: "#ffffff",
           footerAlignment: "center",
           showFooterLinks: false
         }
