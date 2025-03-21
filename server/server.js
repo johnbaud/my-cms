@@ -22,6 +22,7 @@ app.use(express.json())
 // Routes d'authentification
 app.use("/api/auth", authRoutes)
 app.use("/api/admin/settings", settingsRoutes)
+app.use("/api/settings", settingsRoutes)
 app.use("/api/pages", pagesRoutes)
 app.use("/api/navigation", navigationRoutes)
 app.get("/api/admin", verifyToken, isAdmin, (req, res) => {

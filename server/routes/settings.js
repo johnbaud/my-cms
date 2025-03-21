@@ -137,4 +137,14 @@ router.delete("/logo", verifyToken, isAdmin, async (req, res) => {
   }
 })
 
+// ✅ Endpoint public
+router.get("/public", async (req, res) => {
+  try {
+    const settings = await prisma.settings.findFirst(); // ou findUnique({ where: { id: 1 } }) si tu n’en as qu’un
+    res.json(settings);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des paramètres publics :", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+});
 export default router

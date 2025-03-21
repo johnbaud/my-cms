@@ -60,6 +60,33 @@ export default function AdminPages() {
     }
   }
   
+  const handleTogglePublished = async (pageId, currentStatus) => {
+    const token = localStorage.getItem("token");
+  
+    const response = await fetch(`http://localhost:5000/api/pages/${pageId}/publish`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ isPublished: !currentStatus }),
+    });
+  
+    if (response.ok) {
+      const updated = await response.json();
+      setPages((prev) =>
+        prev.map((p) => (p.id === pageId ? { ...p, isPublished: updated.isPublished } : p))
+      );
+      setMessage(`✅ Page ${updated.isPublished ? "publiée" : "dépubliée"} avec succès`);
+    } else {
+      setMessage("❌ Erreur lors de la mise à jour du statut de publication");
+    }
+  
+    // 🔹 Efface le message après 4 secondes
+    setTimeout(() => setMessage(""), 4000);
+  };
+  
+  
   return (
     <div className="d-flex">
       <AdminSidebar />
@@ -87,13 +114,39 @@ export default function AdminPages() {
         <ul className="list-group">
           {pages.map(page => (
             <li key={page.id} className="list-group-item d-flex justify-content-between align-items-center">
-              {page.title} ({page.slug})
-              <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm" title="Modifier">
-                <Edit size={16}/>
-              </Link>
-              <button className="btn btn-danger btn-sm" onClick={() => handleDeletePage(page.id)} title="Supprimer">
-                <Trash2 size={16}/>
-              </button>
+              <div>
+                <strong>{page.title}</strong> <span className="text-muted">({page.slug})</span>
+                {" "}
+                {page.isPublished ? (
+                  <span className="badge bg-success">Publiée</span>
+                ) : (
+                  <span className="badge bg-secondary">Brouillon</span>
+                )}
+              </div>
+
+              <div>
+                <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm me-2" title="Modifier">
+                  <Edit size={16}/>
+                </Link>
+                {page.slug !== "" && (
+                  <button className="btn btn-danger btn-sm me-2" onClick={() => handleDeletePage(page.id)} title="Supprimer">
+                    <Trash2 size={16}/>
+                  </button>
+                )}
+                {page.slug === "" ? (
+                  <button className="btn btn-sm btn-secondary" disabled title="Impossible de dépublier la page d'accueil">
+                    Page d'accueil
+                  </button>
+                ) : (
+                  <button
+                    className={`btn btn-sm ${page.isPublished ? "btn-warning" : "btn-success"}`}
+                    onClick={() => handleTogglePublish(page.id, !page.isPublished)}
+                  >
+                    {page.isPublished ? "Dépublier" : "Publier"}
+                  </button>
+                )}
+
+              </div>
             </li>
           ))}
         </ul>

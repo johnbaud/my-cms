@@ -52,6 +52,7 @@ model Page {
   updatedAt       DateTime         @updatedAt()
   blocks          Block[]
   navigationLinks NavigationLink[]
+  isPublished     Boolean          @default(true)
 }
 
 model Block {

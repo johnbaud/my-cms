@@ -19,6 +19,7 @@ router.get("/", async (req, res) => {
 router.get("/public", async (req, res) => {
   try {
     const pages = await prisma.page.findMany({
+      where: { isPublished: true },
       select: { id: true, title: true, slug: true }
     })
     res.json(pages)
@@ -30,11 +31,11 @@ router.get("/public", async (req, res) => {
 
 // 🔹 Créer une nouvelle page
 router.post("/", verifyToken, isAdmin, async (req, res) => {
-  const { title, slug } = req.body
+  const { title, slug, isPublished = true } = req.body
 
   try {
     const newPage = await prisma.page.create({
-      data: { title, slug }
+      data: { title, slug, isPublished }
     })
     res.json(newPage)
   } catch (error) {
@@ -85,6 +86,11 @@ router.delete("/:pageId", verifyToken, isAdmin, async (req, res) => {
     })
 
     if (!page) return res.status(404).json({ message: "Page non trouvée" })
+
+    const isHomepage = page.slug === ""
+    if (isHomepage) {
+      return res.status(403).json({ message: "La page d'accueil ne peut pas être supprimée." })
+    }
 
     // 🔹 Supprime la page (les blocs seront supprimés en cascade)
     await prisma.page.delete({ where: { id: parseInt(pageId) } })
@@ -164,6 +170,43 @@ router.put("/blocks/:blockId/move", verifyToken, isAdmin, async (req, res) => {
     res.status(500).json({ message: "Erreur serveur." })
   }
 })
+
+// 🔹 Mettre à jour le titre ou le slug d’une page
+router.patch("/:pageId", verifyToken, isAdmin, async (req, res) => {
+  const { title, slug } = req.body
+  const { pageId } = req.params
+
+  try {
+    const updated = await prisma.page.update({
+      where: { id: parseInt(pageId) },
+      data: {
+        ...(title && { title }),
+        ...(slug && { slug })
+      }
+    })
+    res.json(updated)
+  } catch (error) {
+    console.error("❌ Erreur lors de la mise à jour de la page :", error)
+    res.status(500).json({ message: "Erreur serveur lors de la mise à jour de la page." })
+  }
+})
+
+// 🔹 Mettre à jour le statut de publication
+router.patch("/:pageId/publish", verifyToken, isAdmin, async (req, res) => {
+  const { isPublished } = req.body;
+
+  try {
+    const updated = await prisma.page.update({
+      where: { id: parseInt(req.params.pageId) },
+      data: { isPublished }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.log("❌ Erreur lors de la mise à jour du statut :", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+});
 
 
 export default router

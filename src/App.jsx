@@ -22,18 +22,10 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
   
-        // 🔹 Vérification du token (évite les requêtes sans auth)
-        if (!token) {
-          console.error("❌ Aucun token trouvé. Redirection vers la connexion.");
-          return;
-        }
-  
-        // 🔹 Récupération des paramètres globaux avec AUTH
-        const settingsRes = await fetch("http://localhost:5000/api/admin/settings", {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
+        // 🔹 Récupération des paramètres globaux
+        const settingsRes = await fetch("http://localhost:5000/api/admin/settings/public");
+
   
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
@@ -42,10 +34,8 @@ export default function App() {
           console.error("❌ Erreur lors du chargement des paramètres. Accès refusé ?");
         }
   
-        // 🔹 Récupération des liens de navigation avec AUTH
-        const navLinksRes = await fetch("http://localhost:5000/api/navigation/navbar", {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
+        // 🔹 Récupération des liens de navigation
+        const navLinksRes = await fetch("http://localhost:5000/api/navigation/navbar");
   
         if (navLinksRes.ok) {
           const navLinksData = await navLinksRes.json();
@@ -54,10 +44,8 @@ export default function App() {
           console.error("❌ Erreur lors du chargement de la navigation.");
         }
   
-        // 🔹 Récupération des liens du footer avec AUTH
-        const footerLinksRes = await fetch("http://localhost:5000/api/navigation/footer", {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
+        // 🔹 Récupération des liens du footer
+        const footerLinksRes = await fetch("http://localhost:5000/api/navigation/footer");
   
         if (footerLinksRes.ok) {
           const footerLinksData = await footerLinksRes.json();
@@ -83,7 +71,7 @@ export default function App() {
   
     fetchData();
   }, []);
-  if (!settings) return <p>Chargement...</p>;
+  if (!settings || !pages || !navLinks || !footerLinks) return <p>Chargement...</p>;
   return (
     <Router>
       <Routes>
