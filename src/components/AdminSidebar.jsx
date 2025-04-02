@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useEffect, useState } from "react"
-import { Menu, X, Home, Settings, FileText, LogOut } from "lucide-react"
+import { Menu, X, Home, Settings, FileText, LogOut, Eye } from "lucide-react"
 
 
 export default function AdminSidebar() {
@@ -50,7 +50,19 @@ export default function AdminSidebar() {
             <FileText size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} /> {isExpanded && "Gérer les pages"}
           </Link>
         </li>
+        <li className="nav-item mb-2">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-link text-white"
+          >
+            <Eye size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} />
+            {isExpanded && "Voir le site"}
+          </a>
+        </li>
       </ul>
+      
       <div className="mt-auto">
         <p className={`text-white-50 ${isExpanded ? "" : "d-none"}`}>Connecté en tant que {userName || "Admin"}</p>
         <button className="btn btn-danger w-100 mt-3" onClick={handleLogout}>

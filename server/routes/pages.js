@@ -47,19 +47,20 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
 router.post("/:pageId/blocks", verifyToken, isAdmin, async (req, res) => {
   const { type, content, order } = req.body
   const { pageId } = req.params
-
+  console.log("🪵 Reçu pour création de bloc :", { type, content, order, pageId })
   try {
     const newBlock = await prisma.block.create({
       data: {
         type,
-        content: JSON.stringify(content),
+        content,
         order,
         page: { connect: { id: parseInt(pageId) } }
       }
     })
     res.json(newBlock)
   } catch (error) {
-    res.status(500).json({ message: "Erreur serveur." })
+    console.error("❌ Erreur lors de la création du bloc :", error); // 🔍 on affiche ici le vrai message
+    res.status(500).json({ message: "Erreur serveur.", error: error.message });
   }
 })
 // 🔹 Récupérer une page avec ses blocs
@@ -106,11 +107,12 @@ router.delete("/:pageId", verifyToken, isAdmin, async (req, res) => {
 router.put("/blocks/:blockId", verifyToken, isAdmin, async (req, res) => {
   const { content } = req.body
   const { blockId } = req.params
-  console.log("🔹 Mise à jour demandée pour le bloc ID :", blockId)
+  console.log("Contenu reçu pour le bloc :", content)
+
   try {
     const updatedBlock = await prisma.block.update({
       where: { id: parseInt(blockId) },
-      data: { content: JSON.stringify(content) }
+      data: { content }
     })
     res.json(updatedBlock)
   } catch (error) {

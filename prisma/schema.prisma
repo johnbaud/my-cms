@@ -58,7 +58,7 @@ model Page {
 model Block {
   id      Int    @id @default(autoincrement())
   type    String
-  content String
+  content String @db.LongText
   order   Int
   pageId  Int
   page    Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)

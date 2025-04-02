@@ -79,3 +79,15 @@ main {
 .navbar-expand-lg .navbar-collapse{
   flex-grow: 0;
 }
+
+/* Styling de base de Tiptap */
+.ProseMirror {
+  min-height: 200px;
+  outline: none;
+}
+
+.ProseMirror:focus {
+  outline: 2px solid #BAA7F6;
+  border-radius: 4px;
+  padding: 0.5rem;
+}

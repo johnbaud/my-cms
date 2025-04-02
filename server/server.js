@@ -6,10 +6,10 @@ import { verifyToken, isAdmin } from "./middleware/authMiddleware.js"
 import settingsRoutes from "./routes/settings.js"
 import pagesRoutes from "./routes/pages.js"
 import navigationRoutes from "./routes/navigation.js"
+import uploadRoutes from "./routes/upload.js";
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
-
 
 dotenv.config()
 
@@ -18,19 +18,25 @@ const PORT = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
+app.use(express.static('../public'))
 
-// Routes d'authentification
+app.use("/api", uploadRoutes);
+app.use("/uploads", express.static("public/uploads"));
+
+// Routes existantes
 app.use("/api/auth", authRoutes)
 app.use("/api/admin/settings", settingsRoutes)
 app.use("/api/settings", settingsRoutes)
 app.use("/api/pages", pagesRoutes)
 app.use("/api/navigation", navigationRoutes)
+
 app.get("/api/admin", verifyToken, isAdmin, (req, res) => {
   res.json({ message: "Bienvenue dans l’admin, accès réservé aux admins !" })
 })
+
 const createHomePageIfNotExists = async () => {
   const existingHomePage = await prisma.page.findFirst({
-    where: { slug: "" } // 🔹 Recherche une page avec un slug vide
+    where: { slug: "" }
   })
 
   if (!existingHomePage) {
@@ -39,7 +45,7 @@ const createHomePageIfNotExists = async () => {
     const homePage = await prisma.page.create({
       data: {
         title: "Accueil",
-        slug: "", // 🔹 Slug vide pour la page d’accueil
+        slug: "",
         blocks: {
           create: [
             {
