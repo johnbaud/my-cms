@@ -4,69 +4,79 @@ import path from "path";
 import fs from "fs";
 import prisma from "../prismaClient.js";
 
-
 const router = express.Router();
-
 const uploadDir = path.resolve("public/uploads");
 
-// Crée le dossier si nécessaire
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = Date.now() + "-" + file.originalname;
-    cb(null, uniqueName);
-  }
-});
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true)
-    } else {
-      cb(new Error("Seuls les fichiers JPG, PNG, WEBP et GIF sont autorisés"))
-    }
+// 🔹 Récupération dynamique des extensions autorisées
+async function getAllowedExtensions() {
+  const settings = await prisma.settings.findFirst();
+  return settings?.allowedFileExtensions || ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf", "zip"];
 }
 
-const upload = multer({ storage, fileFilter })
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
 
-router.post("/upload-image", upload.single("image"), (req, res) => {
+function asyncMulterUpload(req, res, next) {
+  getAllowedExtensions().then((allowed) => {
+    const filter = (req, file, cb) => {
+      const ext = path.extname(file.originalname).slice(1).toLowerCase();
+      if (allowed.includes(ext)) cb(null, true);
+      else cb(new Error(`Extension "${ext}" non autorisée.`), false);
+    };
+
+    const upload = multer({ storage, fileFilter: filter }).single("image");
+    upload(req, res, function (err) {
+      if (err instanceof multer.MulterError || err) {
+        return res.status(400).json({ message: err.message || "Erreur d’upload" });
+      }
+      next();
+    });
+  });
+}
+
+// 🔹 Upload d'image
+router.post("/upload-image", asyncMulterUpload, (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "Aucun fichier envoyé ou type non supporté" });
   }
 
-  // Chemin relatif depuis /public
   const fileUrl = `/uploads/${req.file.filename}`;
   res.json({ url: fileUrl });
 });
 
-// 🔥 Supprimer une image
+// 🔹 Suppression d’image (blocs, logo, AdminUploads)
 router.delete("/delete-image", async (req, res) => {
   const { url } = req.body;
-  console.log("🧼 Requête suppression reçue pour :", url);
-
   if (!url || !url.startsWith("/uploads/")) {
     return res.status(400).json({ message: "URL invalide ou manquante" });
   }
 
   const filePath = path.join("public", url);
-  console.log("🧾 Chemin fichier à supprimer :", filePath);
 
   try {
+    const isLogoUsed = await prisma.settings.findFirst({ where: { logo: url } });
+
+    const matchingBlocks = await prisma.block.findMany({
+      where: { type: "image", content: url }
+    });
+
+    const isUsed = (isLogoUsed || matchingBlocks.length > 0);
+    if (isUsed) {
+      return res.status(403).json({ message: "Ce fichier est encore utilisé dans une ou plusieurs pages ou comme logo du site." });
+    }
+
     const exists = fs.existsSync(filePath);
     if (!exists) {
-      console.warn("⛔ Fichier introuvable sur le disque :", filePath);
       return res.status(404).json({ message: "Fichier introuvable sur le disque" });
     }
 
-    // ✅ Pas besoin de vérifier la BDD ici — le front s’en est chargé en amont
     await fs.promises.unlink(filePath);
-    console.log("🗑️ Fichier supprimé physiquement :", filePath);
     res.json({ message: "Fichier supprimé avec succès" });
 
   } catch (err) {
@@ -75,6 +85,52 @@ router.delete("/delete-image", async (req, res) => {
   }
 });
 
+// 🔹 Listing des fichiers
+router.get("/uploads/list", async (req, res) => {
+  try {
+    const folderPath = path.join("public", "uploads");
+    const files = await fs.promises.readdir(folderPath);
 
-  
+    const settings = await prisma.settings.findFirst();
+    const currentLogo = settings?.logo || null;
+
+    const fileStats = await Promise.all(
+      files.map(async (name) => {
+        const fullPath = path.join(folderPath, name);
+        const stats = await fs.promises.stat(fullPath);
+        const url = `/uploads/${name}`;
+
+        const usedBlocks = await prisma.block.findMany({
+          where: {
+            type: "image",
+            content: url
+          },
+          include: {
+            page: {
+              select: { id: true, title: true, slug: true }
+            }
+          }
+        });
+
+        const usedOnPages = usedBlocks.map(b => b.page).filter(Boolean);
+
+        return {
+          name,
+          size: stats.size,
+          createdAt: stats.birthtime,
+          url,
+          extension: path.extname(name).slice(1).toUpperCase(),
+          usedOnPages,
+          usedAsLogo: currentLogo === url 
+        };
+      })
+    );
+
+    res.json(fileStats);
+  } catch (err) {
+    console.error("❌ Erreur listing fichiers :", err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
 export default router;

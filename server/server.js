@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js"
 import { verifyToken, isAdmin } from "./middleware/authMiddleware.js"
 import settingsRoutes from "./routes/settings.js"
 import pagesRoutes from "./routes/pages.js"
+import blocksRoutes from "./routes/blocks.js"
 import navigationRoutes from "./routes/navigation.js"
 import uploadRoutes from "./routes/upload.js";
 import { PrismaClient } from "@prisma/client"
@@ -28,6 +29,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/admin/settings", settingsRoutes)
 app.use("/api/settings", settingsRoutes)
 app.use("/api/pages", pagesRoutes)
+app.use("/api/blocks", blocksRoutes)
 app.use("/api/navigation", navigationRoutes)
 
 app.get("/api/admin", verifyToken, isAdmin, (req, res) => {

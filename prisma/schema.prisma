@@ -28,7 +28,7 @@ model Settings {
   logo         String? // Stockera l'URL du logo
   primaryColor String? // Couleur principale
 
-  // 🔹 Navigattion
+  // Navigattion
   showLogo     Boolean  @default(true)
   showSiteName Boolean  @default(true)
   navAlignment String   @default("left")
@@ -37,11 +37,15 @@ model Settings {
   navTextColor     String  @default("#000000")
   createdAt    DateTime @default(now())
 
-  // 🔹 Footer
+  // Footer
   footerBgColor   String  @default("#000000")
   footerTextColor  String  @default("#ffffff")
   footerAlignment String  @default("center")
   showFooterLinks Boolean @default(false)
+
+  // Liste des extensions autorisées pour l’upload
+  allowedFileExtensions String @default("jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4")
+
 }
 
 model Page {

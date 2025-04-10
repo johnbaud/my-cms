@@ -41,6 +41,11 @@ export default function AdminSidebar() {
           </Link>
         </li>
         <li className="nav-item mb-2">
+          <Link className={getNavLinkClass("/admin/uploads")} to="/admin/uploads">
+            <FileText size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} /> {isExpanded && "Gérer les fichiers"}
+          </Link>
+        </li>
+        <li className="nav-item mb-2">
           <Link className={getNavLinkClass("/admin/settings")} to="/admin/settings">
             <Settings size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} /> {isExpanded && "Paramètres"}
           </Link>
@@ -48,6 +53,11 @@ export default function AdminSidebar() {
         <li className="nav-item mb-2">
           <Link className={getNavLinkClass("/admin/pages")} to="/admin/pages">
             <FileText size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} /> {isExpanded && "Gérer les pages"}
+          </Link>
+        </li>
+        <li className="nav-item mb-2">
+          <Link className={getNavLinkClass("/admin/blocks")} to="/admin/blocks">
+            <FileText size={20} className={isExpanded ? "me-2" : "d-block mx-auto"} /> {isExpanded && "Gérer les blocks"}
           </Link>
         </li>
         <li className="nav-item mb-2">

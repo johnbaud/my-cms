@@ -38,8 +38,18 @@ export default function Admin() {
               </Link>
             </li>
             <li className="mt-2">
+              <Link to="/admin/uploads" className="btn btn-success">
+                <FileText size={20} className="me-2" /> Gérer les fichiers
+              </Link>
+            </li>
+            <li className="mt-2">
               <Link to="/admin/pages" className="btn btn-success">
                 <FileText size={20} className="me-2" /> Gérer les pages
+              </Link>
+            </li>
+            <li className="mt-2">
+              <Link to="/admin/blocks" className="btn btn-success">
+                <FileText size={20} className="me-2" /> Gérer les blocks
               </Link>
             </li>
           </ul>

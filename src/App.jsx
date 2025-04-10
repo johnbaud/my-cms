@@ -8,7 +8,11 @@ import Login from "./pages/Login"
 import Admin from "./pages/Admin"
 import AdminSettings from "./pages/AdminSettings"
 import AdminPages from "./pages/AdminPages"
+import AdminBlocks from "./pages/AdminBlocks"
+import AdminUploads from "./pages/AdminUploads";
 import AdminPageEditor from "./pages/AdminPageEditor"
+import AdminBlockEditor from "./pages/AdminBlockEditor"
+
 
 import { useEffect, useState } from "react"
 
@@ -89,8 +93,12 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/uploads" element={<AdminUploads />} />
         <Route path="/admin/pages" element={<AdminPages />} />
+        <Route path="/admin/blocks" element= {<AdminBlocks />} />
         <Route path="/admin/pages/:pageId" element={<AdminPageEditor />} />
+        <Route path="/admin/blocks/:blockId" element={<AdminBlockEditor />} />
+
 
         {/* 🔹 Page 404 */}
         <Route path="*" element={<NotFoundPage />} />

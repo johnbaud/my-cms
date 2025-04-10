@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { Settings, Save, Trash2 } from "lucide-react";
-import AdminSettingsTabs from "../components/AdminSettingsTabs"; // 🔹 Gère les onglets
+import AdminSettingsTabs from "../components/AdminSettingsTabs";
 import { Tab } from "react-bootstrap";
-import CustomNavbar from "../components/Navbar"; // ✅ Navbar réelle utilisée
-import Footer from "../components/Footer"; // ✅ Footer réel utilisé
+import CustomNavbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import NavigationLinksManager from "../components/NavigationLinksManager";
 
 export default function AdminSettings() {
@@ -22,15 +22,18 @@ export default function AdminSettings() {
     footerBgColor: "#000000",
     footerTextColor: "#ffffff",
     footerAlignment: "center",
-    showFooterLinks: true
+    showFooterLinks: true,
+    allowedFileExtensions: "jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4"
   });
 
   const [message, setMessage] = useState("");
-  const [logoFile, setLogoFile] = useState(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [navLinks, setNavLinks] = useState([]);
   const [footerLinks, setFooterLinks] = useState([]);
+  const [pendingLogo, setPendingLogo] = useState(null);
+  const [previousLogo, setPreviousLogo] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,7 +46,6 @@ export default function AdminSettings() {
       })
       .catch(() => navigate("/login"));
 
-    // 🔹 Chargement des liens de navigation et du footer
     fetch("http://localhost:5000/api/navigation/navbar")
       .then(res => res.json())
       .then(data => setNavLinks(data))
@@ -55,30 +57,59 @@ export default function AdminSettings() {
       .catch(() => console.error("❌ Erreur chargement footer"));
   }, [navigate, refreshTrigger]);
 
-  const handleFileChange = (e) => {
-    setLogoFile(e.target.files[0]);
-  };
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
     const formData = new FormData();
+    formData.append("image", file);
 
-    Object.keys(settings).forEach((key) => {
-      formData.append(key, settings[key]);
-    });
-
-    if (logoFile) formData.append("logo", logoFile);
-
-    const response = await fetch("http://localhost:5000/api/admin/settings", {
+    const token = localStorage.getItem("token");
+    const response = await fetch("http://localhost:5000/api/upload-image", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData
     });
 
     if (response.ok) {
+      const data = await response.json();
+      setPreviousLogo(settings.logo);
+      setSettings(prev => ({ ...prev, logo: data.url }));
+      setPendingLogo(data.url);
+    } else {
+      console.error("⚠️ Erreur lors de l’upload du logo");
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("http://localhost:5000/api/admin/settings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(settings)
+    });
+
+    if (response.ok) {
+      if (
+        previousLogo &&
+        previousLogo !== "/assets/default-logo.png" &&
+        previousLogo !== settings.logo
+      ) {
+        await fetch("http://localhost:5000/api/delete-image", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: previousLogo })
+        });
+      }
+
       setMessage("Paramètres mis à jour avec succès !");
-      setRefreshTrigger((t) => t + 1);
+      setRefreshTrigger(t => t + 1);
+      setPreviousLogo(null);
     } else {
       setMessage("Erreur lors de la mise à jour.");
     }
@@ -93,12 +124,14 @@ export default function AdminSettings() {
 
     const data = await response.json();
     if (response.ok) {
-      setSettings((prev) => ({ ...prev, logo: data.logo }));
+      setSettings(prev => ({ ...prev, logo: data.logo }));
       setMessage("Logo supprimé avec succès.");
     } else {
       setMessage("Erreur lors de la suppression du logo.");
     }
   };
+
+  const triggerFileInput = () => fileInputRef.current.click();
 
   return (
     <div className="d-flex">
@@ -110,9 +143,9 @@ export default function AdminSettings() {
         <AdminSettingsTabs>
           {(activeTab) => (
             <>
-              {/* 🔹 Onglet Général */}
+              {/* Onglet général */}
               <Tab.Pane eventKey="general">
-                <form onSubmit={handleSubmit} encType="multipart/form-data">
+                <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label>Nom du site</label>
                     <input
@@ -126,30 +159,106 @@ export default function AdminSettings() {
 
                   <div className="mb-3">
                     <label>Logo</label>
-                    <input
-                      type="file"
-                      className="form-control"
-                      accept="image/png, image/jpeg, image/svg+xml"
-                      onChange={handleFileChange}
-                    />
+                    {!settings.logo && (
+                      <input
+                        type="file"
+                        className="form-control"
+                        accept="image/png, image/jpeg, image/svg+xml"
+                        onChange={handleFileChange}
+                      />
+                    )}
+
                     {settings.logo && (
                       <div className="mt-2">
                         <img src={settings.logo} alt="Logo actuel" style={{ maxWidth: "100px" }} />
-                        {settings.logo !== "/assets/default-logo.png" && (
-                          <button type="button" className="btn btn-danger btn-sm ms-2" onClick={handleDeleteLogo} title="Supprimer">
-                            <Trash2 size={16}/>
+                        <div className="d-flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={triggerFileInput}
+                          >
+                            Changer le logo
                           </button>
-                        )}
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={handleDeleteLogo}
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="d-none"
+                          accept="image/png, image/jpeg, image/svg+xml"
+                        />
                       </div>
                     )}
                   </div>
 
                   <div className="mb-3">
                     <label>Couleur principale</label>
-                    <input type="color" className="form-control form-control-color"
+                    <input
+                      type="color"
+                      className="form-control form-control-color"
                       value={settings.primaryColor}
                       onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
                     />
+                  </div>
+                  <div className="mb-3">
+                    <label>Extensions autorisées pour l’upload</label>
+                    <select
+                      className="form-select"
+                      multiple
+                      value={Array.isArray(settings.allowedFileExtensions) ? settings.allowedFileExtensions : (settings.allowedFileExtensions || "").split(",")}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                        setSettings({ ...settings, allowedFileExtensions: selected });
+                      }}
+                    >
+                      <optgroup label="📷 Images">
+                        <option value="jpg">JPG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="png">PNG</option>
+                        <option value="gif">GIF</option>
+                        <option value="webp">WEBP</option>
+                        <option value="svg">SVG</option>
+                      </optgroup>
+
+                      <optgroup label="📄 Documents">
+                        <option value="pdf">PDF</option>
+                        <option value="txt">TXT</option>
+                        <option value="csv">CSV</option>
+                        <option value="json">JSON</option>
+                        <option value="xml">XML</option>
+                        <option value="md">MD</option>
+                      </optgroup>
+
+                      <optgroup label="📦 Archives">
+                        <option value="zip">ZIP</option>
+                        <option value="rar">RAR</option>
+                        <option value="7z">7Z</option>
+                        <option value="tar">TAR</option>
+                        <option value="gz">GZ</option>
+                      </optgroup>
+
+                      <optgroup label="🎥 Vidéos">
+                        <option value="mp4">MP4</option>
+                        <option value="webm">WEBM</option>
+                        <option value="mov">MOV</option>
+                      </optgroup>
+
+                      <optgroup label="🎧 Audio">
+                        <option value="mp3">MP3</option>
+                        <option value="wav">WAV</option>
+                        <option value="ogg">OGG</option>
+                      </optgroup>
+                    </select>
+                    <div className="form-text">
+                      Utilisez Ctrl/Cmd + clic pour en sélectionner plusieurs.
+                    </div>
                   </div>
 
                   <button type="submit" className="btn btn-primary">
@@ -158,141 +267,88 @@ export default function AdminSettings() {
                 </form>
               </Tab.Pane>
 
-              {/* 🔹 Onglet Navigation */}
+              {/* Onglet navigation */}
               <Tab.Pane eventKey="navigation">
                 <CustomNavbar settings={settings} navLinks={navLinks} />
                 <form onSubmit={handleSubmit}>
-                  
-                  {/* Afficher/Masquer le logo */}
                   <div className="mb-3">
                     <label>Afficher le logo</label>
                     <div>
-                      <button 
-                        type="button" 
-                        className={`btn ${settings.showLogo ? "btn-success" : "btn-outline-secondary"} me-2`} 
+                      <button
+                        type="button"
+                        className={`btn ${settings.showLogo ? "btn-success" : "btn-outline-secondary"} me-2`}
                         onClick={() => setSettings({ ...settings, showLogo: true })}
-                      >
-                        Oui
-                      </button>
-                      <button 
-                        type="button" 
-                        className={`btn ${!settings.showLogo ? "btn-danger" : "btn-outline-secondary"}`} 
+                      >Oui</button>
+                      <button
+                        type="button"
+                        className={`btn ${!settings.showLogo ? "btn-danger" : "btn-outline-secondary"}`}
                         onClick={() => setSettings({ ...settings, showLogo: false })}
-                      >
-                        Non
-                      </button>
+                      >Non</button>
                     </div>
                   </div>
 
-                  {/* Afficher/Masquer le nom du site */}
                   <div className="mb-3">
                     <label>Afficher le nom du site</label>
                     <div>
-                      <button 
-                        type="button" 
-                        className={`btn ${settings.showSiteName ? "btn-success" : "btn-outline-secondary"} me-2`} 
+                      <button
+                        type="button"
+                        className={`btn ${settings.showSiteName ? "btn-success" : "btn-outline-secondary"} me-2`}
                         onClick={() => setSettings({ ...settings, showSiteName: true })}
-                      >
-                        Oui
-                      </button>
-                      <button 
-                        type="button" 
-                        className={`btn ${!settings.showSiteName ? "btn-danger" : "btn-outline-secondary"}`} 
+                      >Oui</button>
+                      <button
+                        type="button"
+                        className={`btn ${!settings.showSiteName ? "btn-danger" : "btn-outline-secondary"}`}
                         onClick={() => setSettings({ ...settings, showSiteName: false })}
-                      >
-                        Non
-                      </button>
+                      >Non</button>
                     </div>
                   </div>
 
-                  {/* Alignement */}
                   <div className="mb-3">
                     <label>Alignement de la navigation</label>
-                    <select 
-                      className="form-select"
-                      value={settings.navAlignment}
-                      onChange={(e) => setSettings({ ...settings, navAlignment: e.target.value })}
-                    >
+                    <select className="form-select" value={settings.navAlignment} onChange={(e) => setSettings({ ...settings, navAlignment: e.target.value })}>
                       <option value="left">Gauche</option>
                       <option value="center">Centre</option>
                       <option value="right">Droite</option>
                     </select>
                   </div>
 
-                  {/* Hauteur de la navbar */}
                   <div className="mb-3">
                     <label>Hauteur de la barre de navigation : {settings.navHeight}px</label>
-                    <input 
-                      type="range"
-                      className="form-range"
-                      min="40"
-                      max="120"
-                      value={settings.navHeight}
-                      onChange={(e) => setSettings({ ...settings, navHeight: e.target.value })}
-                    />
+                    <input type="range" className="form-range" min="40" max="120" value={settings.navHeight} onChange={(e) => setSettings({ ...settings, navHeight: e.target.value })} />
                   </div>
 
-                  {/* Couleur de fond */}
                   <div className="mb-3">
                     <label>Couleur de fond</label>
-                    <input 
-                      type="color"
-                      className="form-control form-control-color"
-                      value={settings.navBgColor}
-                      onChange={(e) => setSettings({ ...settings, navBgColor: e.target.value })}
-                    />
+                    <input type="color" className="form-control form-control-color" value={settings.navBgColor} onChange={(e) => setSettings({ ...settings, navBgColor: e.target.value })} />
                   </div>
 
-                  {/* Couleur de texte */}
                   <div className="mb-3">
                     <label>Couleur du texte</label>
-                    <input 
-                      type="color" 
-                      className="form-control form-control-color"
-                      value={settings.navTextColor} 
-                      onChange={(e) => setSettings({ ...settings, navTextColor: e.target.value })} 
-                    />
+                    <input type="color" className="form-control form-control-color" value={settings.navTextColor} onChange={(e) => setSettings({ ...settings, navTextColor: e.target.value })} />
                   </div>
 
-                  <button type="submit" className="btn btn-primary">
-                    Enregistrer les paramètres
-                  </button>
+                  <button type="submit" className="btn btn-primary">Enregistrer les paramètres</button>
                 </form>
                 <NavigationLinksManager location="navbar" onUpdate={() => setRefreshTrigger(t => t + 1)} />
               </Tab.Pane>
 
-              {/* 🔹 Onglet Footer */}
+              {/* Onglet footer */}
               <Tab.Pane eventKey="footer">
                 <Footer settings={settings} footerLinks={footerLinks} />
-                
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label>Couleur de fond</label>
-                    <input 
-                      type="color"
-                      className="form-control form-control-color"
-                      value={settings.footerBgColor}
-                      onChange={(e) => setSettings({ ...settings, footerBgColor: e.target.value })}
-                    />
+                    <input type="color" className="form-control form-control-color" value={settings.footerBgColor} onChange={(e) => setSettings({ ...settings, footerBgColor: e.target.value })} />
                   </div>
 
                   <div className="mb-3">
                     <label>Couleur du texte</label>
-                    <input 
-                      type="color" 
-                      className="form-control form-control-color"
-                      value={settings.footerTextColor} 
-                      onChange={(e) => setSettings({ ...settings, footerTextColor: e.target.value })} 
-                    />
+                    <input type="color" className="form-control form-control-color" value={settings.footerTextColor} onChange={(e) => setSettings({ ...settings, footerTextColor: e.target.value })} />
                   </div>
 
                   <div className="mb-3">
                     <label>Alignement du texte</label>
-                    <select 
-                      className="form-select"
-                      value={settings.footerAlignment}
-                      onChange={(e) => setSettings({ ...settings, footerAlignment: e.target.value })}
-                    >
+                    <select className="form-select" value={settings.footerAlignment} onChange={(e) => setSettings({ ...settings, footerAlignment: e.target.value })}>
                       <option value="left">Gauche</option>
                       <option value="center">Centre</option>
                       <option value="right">Droite</option>
@@ -310,7 +366,7 @@ export default function AdminSettings() {
                 <NavigationLinksManager location="footer" onUpdate={() => setRefreshTrigger(t => t + 1)} />
               </Tab.Pane>
 
-              {/* 🔹 Onglet Formulaires */}
+              {/* Onglet formulaires */}
               <Tab.Pane eventKey="forms">
                 <p>⚙️ Ici on va gérer les formulaires.</p>
               </Tab.Pane>
