@@ -3,10 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import BlockFormFactory from "../components/blocks/BlockFormFactory";
 import { Plus, Edit, Trash2, Save, ArrowLeft, ChevronsUpDown } from "lucide-react";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminPageEditor() {
   const { pageId } = useParams();
   const navigate = useNavigate();
+  const { accessToken } = useAuth();
+
   const [page, setPage] = useState(null);
   const [blocks, setBlocks] = useState([]);
   const [newBlockType, setNewBlockType] = useState("text");
@@ -15,32 +19,25 @@ export default function AdminPageEditor() {
   const [expandedBlockId, setExpandedBlockId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch(`http://localhost:5000/api/pages/${pageId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    authFetch(`/pages/${pageId}`, {}, accessToken)
       .then((res) => res.json())
       .then((data) => {
         setPage(data);
         setBlocks(data.blocks || []);
       })
       .catch(() => navigate("/admin/pages"));
-  }, [pageId, navigate]);
+  }, [pageId, navigate, accessToken]);
 
   const handleAddBlock = async () => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/pages/${pageId}/blocks`, {
+    const response = await authFetch(`/pages/${pageId}/blocks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: newBlockType,
         content: newBlockContent,
         order: blocks.length,
       }),
-    });
+    }, accessToken);
 
     if (response.ok) {
       const newBlock = await response.json();
@@ -50,28 +47,23 @@ export default function AdminPageEditor() {
   };
 
   const handleUpdateBlock = async (blockId, newContent) => {
-    if (!blockId) return;
-    const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/pages/blocks/${blockId}`, {
+    const response = await authFetch(`/pages/blocks/${blockId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: newContent }),
-    });
+    }, accessToken);
 
     if (response.ok) {
-      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, content: newContent } : b)));
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, content: newContent } : b))
+      );
     }
   };
 
   const handleDeleteBlock = async (blockId) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/pages/blocks/${blockId}`, {
+    const response = await authFetch(`/pages/blocks/${blockId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    }, accessToken);
 
     if (response.ok) {
       setBlocks((prev) => prev.filter((b) => b.id !== blockId));
@@ -79,15 +71,11 @@ export default function AdminPageEditor() {
   };
 
   const handleMoveBlock = async (blockId, direction) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/pages/blocks/${blockId}/move`, {
+    const response = await authFetch(`/pages/blocks/${blockId}/move`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ direction }),
-    });
+    }, accessToken);
 
     if (response.ok) {
       const updatedBlocks = await response.json();
@@ -96,15 +84,11 @@ export default function AdminPageEditor() {
   };
 
   const handleUpdatePageMeta = async () => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:5000/api/pages/${pageId}`, {
+    const response = await authFetch(`/pages/${pageId}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: page.title, slug: page.slug }),
-    });
+    }, accessToken);
 
     if (response.ok) {
       const updated = await response.json();
@@ -122,10 +106,12 @@ export default function AdminPageEditor() {
       <div className="container mt-5" style={{ marginLeft: "260px" }}>
         {page ? (
           <>
-            <button className="btn btn-outline-secondary btn-sm mb-3" onClick={() => navigate("/admin/pages")}> <ArrowLeft size={16} /> Retour </button>
+            <button className="btn btn-outline-secondary btn-sm mb-3" onClick={() => navigate("/admin/pages")}>
+              <ArrowLeft size={16} /> Retour
+            </button>
 
             <h2><Edit size={16} /> Modifier la page : {page.title}</h2>
-            <h3 className="mt-4">Informations de la page</h3>
+
             {message && <p>{message}</p>}
 
             <form onSubmit={(e) => { e.preventDefault(); handleUpdatePageMeta(); }}>
@@ -175,7 +161,9 @@ export default function AdminPageEditor() {
             <div className="mb-3">
               <label className="form-label">Contenu</label>
               <BlockFormFactory type={newBlockType} content={newBlockContent} onChange={setNewBlockContent} />
-              <button className="btn btn-primary" onClick={handleAddBlock}><Plus /> Ajouter</button>
+              <button className="btn btn-primary mt-2" onClick={handleAddBlock}>
+                <Plus /> Ajouter
+              </button>
             </div>
           </>
         ) : <p>Chargement...</p>}

@@ -9,6 +9,8 @@ import blocksRoutes from "./routes/blocks.js"
 import navigationRoutes from "./routes/navigation.js"
 import uploadRoutes from "./routes/upload.js";
 import { PrismaClient } from "@prisma/client"
+import cookieParser from "cookie-parser"
+import refreshTokenRoutes from "./routes/refreshToken.js"
 
 const prisma = new PrismaClient()
 
@@ -17,14 +19,19 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-app.use(cors())
+app.use(cors({
+  origin: "http://localhost:5173", // l'URL de ton frontend
+  credentials: true
+}))
 app.use(express.json())
 app.use(express.static('../public'))
+app.use(cookieParser())
 
 app.use("/api", uploadRoutes);
 app.use("/uploads", express.static("public/uploads"));
 
 // Routes existantes
+app.use("/api/refresh-token", refreshTokenRoutes)
 app.use("/api/auth", authRoutes)
 app.use("/api/admin/settings", settingsRoutes)
 app.use("/api/settings", settingsRoutes)

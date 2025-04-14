@@ -2,23 +2,35 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import { Trash2, Edit } from "lucide-react";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminBlocks() {
+  const { accessToken } = useAuth();
   const [blocks, setBlocks] = useState([]);
   const [filterType, setFilterType] = useState("all");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/blocks")
-      .then((res) => res.json())
-      .then((data) => setBlocks(data))
-      .catch((err) => console.error("Erreur lors de la récupération des blocs:", err));
-  }, []);
+    const fetchBlocks = async () => {
+      try {
+        const res = await authFetch("/blocks", {}, accessToken);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setBlocks(data);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des blocs:", err);
+      }
+    };
+
+    fetchBlocks();
+  }, [accessToken]);
 
   const handleDelete = async (blockId) => {
     if (!window.confirm("Supprimer ce bloc ?")) return;
-    const response = await fetch(`http://localhost:5000/api/pages/blocks/${blockId}`, {
+
+    const response = await authFetch(`/pages/blocks/${blockId}`, {
       method: "DELETE",
-    });
+    }, accessToken);
 
     if (response.ok) {
       setBlocks((prev) => prev.filter((b) => b.id !== blockId));

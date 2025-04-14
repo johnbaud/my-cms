@@ -1,26 +1,25 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 import { Trash2 } from "lucide-react";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminUploads() {
+  const { accessToken } = useAuth();
   const [files, setFiles] = useState([]);
   const [message, setMessage] = useState("");
   const [allowedFileExtensions, setAllowedExtensions] = useState([]);
 
   useEffect(() => {
     // 🔹 Charger les extensions autorisées
-    fetch("http://localhost:5000/api/admin/settings", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
+    authFetch("/admin/settings", {}, accessToken)
       .then((res) => res.json())
       .then((data) => {
         setAllowedExtensions(data.allowedFileExtensions || []);
       });
 
     // 🔹 Charger les fichiers
-    fetch("http://localhost:5000/api/uploads/list")
+    authFetch("/uploads/list", {}, accessToken)
       .then((res) => res.json())
       .then((data) => {
         const normalized = data.map((f) => ({
@@ -32,17 +31,17 @@ export default function AdminUploads() {
         setFiles(normalized);
       })
       .catch((err) => console.error("Erreur chargement fichiers:", err));
-  }, []);
+  }, [accessToken]);
 
   const handleDelete = async (filename) => {
     const confirm = window.confirm("Supprimer ce fichier ?");
     if (!confirm) return;
 
-    const response = await fetch("http://localhost:5000/api/delete-image", {
+    const response = await authFetch("/delete-image", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: `/uploads/${filename}` }),
-    });
+    }, accessToken);
 
     if (response.ok) {
       setFiles((files) => files.filter((f) => f.filename !== filename));
@@ -95,10 +94,7 @@ export default function AdminUploads() {
                   )}
 
                   <div className="card-body">
-                    <p
-                      className="card-text small text-truncate mb-1"
-                      title={file.filename}
-                    >
+                    <p className="card-text small text-truncate mb-1" title={file.filename}>
                       {file.filename}
                     </p>
                     <p className="text-muted small mb-1">

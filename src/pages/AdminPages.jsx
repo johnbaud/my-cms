@@ -1,77 +1,68 @@
-import { useEffect, useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import AdminSidebar from "../components/AdminSidebar"
-import { FileText, Plus, Edit, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import AdminSidebar from "../components/AdminSidebar";
+import { FileText, Plus, Edit, Trash2 } from "lucide-react";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminPages() {
-  const [pages, setPages] = useState([])
-  const [title, setTitle] = useState("")
-  const [slug, setSlug] = useState("")
-  const [message, setMessage] = useState("")
-  const navigate = useNavigate()
+  const [pages, setPages] = useState([]);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const { accessToken } = useAuth();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/pages")
+    authFetch("/pages", {}, accessToken)
       .then(res => res.json())
-      .then(data => setPages(data))
-  }, [])
+      .then(data => setPages(data));
+  }, [accessToken]);
 
   const handleCreatePage = async (e) => {
-    e.preventDefault()
-    const token = localStorage.getItem("token")
-    console.log("Token utilisé :", token)
-    const response = await fetch("http://localhost:5000/api/pages", {
+    e.preventDefault();
+
+    const response = await authFetch("/pages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, slug })
-    })
-    const data = await response.json()
-    console.log("Réponse API :", data)
-    
+    }, accessToken);
+
+    const data = await response.json();
+
     if (response.ok) {
-      setMessage("✅ Page créée avec succès !")
-      setTitle("")
-      setSlug("")
-      fetch("http://localhost:5000/api/pages")
-        .then(res => res.json())
-        .then(data => setPages(data))
+      setMessage("✅ Page créée avec succès !");
+      setTitle("");
+      setSlug("");
+      const updatedPages = await authFetch("/pages", {}, accessToken).then(res => res.json());
+      setPages(updatedPages);
     } else {
-      setMessage("❌ Erreur lors de la création de la page.")
+      setMessage("❌ Erreur lors de la création de la page.");
     }
-  }
+  };
 
   const handleDeletePage = async (pageId) => {
-    const token = localStorage.getItem("token")
-  
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette page ? Cette action est irréversible.")) {
-      return
-    }
-  
-    const response = await fetch(`http://localhost:5000/api/pages/${pageId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette page ? Cette action est irréversible.")) return;
+
+    const response = await authFetch(`/pages/${pageId}`, {
+      method: "DELETE"
+    }, accessToken);
+
     if (response.ok) {
-      setPages(pages.filter(page => page.id !== pageId)) // 🔹 Met à jour l'affichage
+      setPages(pages.filter(page => page.id !== pageId));
     } else {
-      const errorData = await response.json().catch(() => ({ message: "Erreur inconnue" }))
-      console.log("❌ Erreur API :", errorData)
+      const errorData = await response.json().catch(() => ({ message: "Erreur inconnue" }));
+      console.log("❌ Erreur API :", errorData);
     }
-  }
-  
+  };
+
   const handleTogglePublished = async (pageId, currentStatus) => {
-    const token = localStorage.getItem("token");
-  
-    const response = await fetch(`http://localhost:5000/api/pages/${pageId}/publish`, {
+    const response = await authFetch(`/pages/${pageId}/publish`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isPublished: !currentStatus }),
-    });
-  
+    }, accessToken);
+
     if (response.ok) {
       const updated = await response.json();
       setPages((prev) =>
@@ -81,17 +72,15 @@ export default function AdminPages() {
     } else {
       setMessage("❌ Erreur lors de la mise à jour du statut de publication");
     }
-  
-    // 🔹 Efface le message après 4 secondes
+
     setTimeout(() => setMessage(""), 4000);
   };
-  
-  
+
   return (
     <div className="d-flex">
       <AdminSidebar />
       <div className="container mt-5" style={{ marginLeft: "260px" }}>
-      <h2><FileText size={24} className="me-2" /> Gestion des pages</h2>
+        <h2><FileText size={24} className="me-2" /> Gestion des pages</h2>
         {message && <p className={message.startsWith("✅") ? "text-success" : "text-danger"}>{message}</p>}
 
         {/* Formulaire de création */}
@@ -115,8 +104,7 @@ export default function AdminPages() {
           {pages.map(page => (
             <li key={page.id} className="list-group-item d-flex justify-content-between align-items-center">
               <div>
-                <strong>{page.title}</strong> <span className="text-muted">({page.slug})</span>
-                {" "}
+                <strong>{page.title}</strong> <span className="text-muted">({page.slug})</span>{" "}
                 {page.isPublished ? (
                   <span className="badge bg-success">Publiée</span>
                 ) : (
@@ -126,11 +114,11 @@ export default function AdminPages() {
 
               <div>
                 <Link to={`/admin/pages/${page.id}`} className="btn btn-secondary btn-sm me-2" title="Modifier">
-                  <Edit size={16}/>
+                  <Edit size={16} />
                 </Link>
                 {page.slug !== "" && (
                   <button className="btn btn-danger btn-sm me-2" onClick={() => handleDeletePage(page.id)} title="Supprimer">
-                    <Trash2 size={16}/>
+                    <Trash2 size={16} />
                   </button>
                 )}
                 {page.slug === "" ? (
@@ -140,17 +128,16 @@ export default function AdminPages() {
                 ) : (
                   <button
                     className={`btn btn-sm ${page.isPublished ? "btn-warning" : "btn-success"}`}
-                    onClick={() => handleTogglePublish(page.id, !page.isPublished)}
+                    onClick={() => handleTogglePublished(page.id, page.isPublished)}
                   >
                     {page.isPublished ? "Dépublier" : "Publier"}
                   </button>
                 )}
-
               </div>
             </li>
           ))}
         </ul>
       </div>
     </div>
-  )
+  );
 }

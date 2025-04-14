@@ -1,35 +1,44 @@
-import { useEffect, useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import AdminSidebar from "../components/AdminSidebar"
-import { Home, Settings, FileText, LogOut } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import AdminSidebar from "../components/AdminSidebar";
+import { Home, Settings, FileText, LogOut } from "lucide-react";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function Admin() {
-  const [message, setMessage] = useState("")
-  const navigate = useNavigate()
+  const { accessToken } = useAuth();
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const role = localStorage.getItem("role")
+    const fetchAdminData = async () => {
+      try {
+        const res = await authFetch("/admin", {}, accessToken);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setMessage(data.message);
+      } catch (err) {
+        setMessage("❌ Impossible de récupérer les infos du serveur.");
+      }
+    };
 
-    if (!token || role !== "admin") {
-      navigate("/login") // 🔹 Redirige si l'utilisateur n'est pas admin
-    } else {
-      fetch("http://localhost:5000/api/admin", {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => setMessage(data.message))
-        .catch(() => navigate("/login"))
-    }
-  }, [navigate]) // 🔹 Ajoute `navigate` pour éviter un bug de dépendance
+    fetchAdminData();
+  }, [accessToken]);
+
+  const handleLogout = async () => {
+    await fetch("http://localhost:5000/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    navigate("/login");
+  };
 
   return (
     <div className="d-flex">
       <AdminSidebar />
       <div className="container mt-5" style={{ marginLeft: "260px" }}>
         <h1>{message}</h1>
-        
-        {/* Utilisation de Link au lieu de <a href> */}
+
         <nav className="mt-4">
           <ul className="list-unstyled">
             <li>
@@ -55,15 +64,10 @@ export default function Admin() {
           </ul>
         </nav>
 
-        {/* Bouton Déconnexion */}
-        <button className="btn btn-danger mt-3" onClick={() => {
-          localStorage.removeItem("token")
-          localStorage.removeItem("role")
-          navigate("/login")
-        }}>
+        <button className="btn btn-danger mt-3" onClick={handleLogout}>
           <LogOut size={20} className="me-2" /> Déconnexion
         </button>
       </div>
     </div>
-  )
+  );
 }

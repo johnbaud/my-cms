@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { GripVertical, Edit, Trash2 } from "lucide-react";
+import { authFetch } from "../utils/authFetch"
+
 
 export default function NavigationLinksManager({ location, onUpdate }) {
   const [links, setLinks] = useState([]);
@@ -12,9 +14,7 @@ export default function NavigationLinksManager({ location, onUpdate }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const linksRes = await fetch(`http://localhost:5000/api/navigation/${location}`, {
-          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-        });
+        const linksRes = await authFetch(`/navigation/${location}`);
         const linksData = await linksRes.json();
         // Fonction pour extraire tous les liens (y compris enfants) en une seule liste
         const flattenLinks = (links) => {
@@ -50,14 +50,11 @@ export default function NavigationLinksManager({ location, onUpdate }) {
 
   // 🔹 Ajouter un lien
   const handleAddLink = async () => {
-    const response = await fetch("http://localhost:5000/api/navigation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({ ...newLink, location, position: links.length, parentId: newLink.parentId || null })
-    });
+     const response = await authFetch("/navigation", {
+         method: "POST",
+         body: JSON.stringify({ ...newLink, location, position: links.length, parentId: newLink.parentId || null })
+      });
+    
 
     if (response.ok) {
       const addedLink = await response.json();
@@ -71,9 +68,8 @@ export default function NavigationLinksManager({ location, onUpdate }) {
 
   // 🔹 Supprimer un lien
   const handleDeleteLink = async (id) => {
-    const response = await fetch(`http://localhost:5000/api/navigation/${id}`, {
+    const response = await authFetch(`/navigation/${id}`, {
       method: "DELETE",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
     });
 
     if (response.ok) {
@@ -100,12 +96,8 @@ export default function NavigationLinksManager({ location, onUpdate }) {
       parentId: link.parentId || null
     }));
 
-    const response = await fetch("http://localhost:5000/api/navigation/updateOrder", {
+    const response = await authFetch("/navigation/updateOrder", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
       body: JSON.stringify({ links: updatedLinks })
     });
 
@@ -229,12 +221,8 @@ function DraggableLink({ link, index, moveLink, onDelete, pages, links, setLinks
 
   // 🔹 Fonction pour enregistrer les modifications
   const handleSaveEdit = async () => {
-    const response = await fetch("http://localhost:5000/api/navigation/update", {
+    const response = await authFetch("/navigation/update", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
       body: JSON.stringify(editedLink)
     });
 

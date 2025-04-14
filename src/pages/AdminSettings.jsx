@@ -7,6 +7,8 @@ import { Tab } from "react-bootstrap";
 import CustomNavbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import NavigationLinksManager from "../components/NavigationLinksManager";
+import { authFetch } from "../utils/authFetch";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
@@ -26,6 +28,7 @@ export default function AdminSettings() {
     allowedFileExtensions: "jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4"
   });
 
+  const { accessToken } = useAuth();
   const [message, setMessage] = useState("");
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
@@ -36,10 +39,7 @@ export default function AdminSettings() {
   const [previousLogo, setPreviousLogo] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("http://localhost:5000/api/admin/settings", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    authFetch("/admin/settings", {}, accessToken)
       .then(res => res.json())
       .then(data => {
         if (data) setSettings(data);
@@ -55,7 +55,7 @@ export default function AdminSettings() {
       .then(res => res.json())
       .then(data => setFooterLinks(data))
       .catch(() => console.error("❌ Erreur chargement footer"));
-  }, [navigate, refreshTrigger]);
+  }, [navigate, refreshTrigger, accessToken]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -64,35 +64,35 @@ export default function AdminSettings() {
     const formData = new FormData();
     formData.append("image", file);
 
-    const token = localStorage.getItem("token");
-    const response = await fetch("http://localhost:5000/api/upload-image", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData
-    });
+    try {
+      const response = await authFetch("/upload-image", {
+        method: "POST",
+        body: formData
+      }, accessToken);
 
-    if (response.ok) {
-      const data = await response.json();
-      setPreviousLogo(settings.logo);
-      setSettings(prev => ({ ...prev, logo: data.url }));
-      setPendingLogo(data.url);
-    } else {
-      console.error("⚠️ Erreur lors de l’upload du logo");
+      if (response.ok) {
+        const data = await response.json();
+        setPreviousLogo(settings.logo);
+        setSettings(prev => ({ ...prev, logo: data.url }));
+        setPendingLogo(data.url);
+      } else {
+        console.error("⚠️ Erreur lors de l’upload du logo");
+      }
+    } catch (err) {
+      console.error("❌ Erreur réseau pendant l’upload :", err);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
 
-    const response = await fetch("http://localhost:5000/api/admin/settings", {
+    const response = await authFetch("/admin/settings", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(settings)
-    });
+    }, accessToken);
 
     if (response.ok) {
       if (
@@ -100,11 +100,11 @@ export default function AdminSettings() {
         previousLogo !== "/assets/default-logo.png" &&
         previousLogo !== settings.logo
       ) {
-        await fetch("http://localhost:5000/api/delete-image", {
+        await authFetch("/delete-image", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: previousLogo })
-        });
+        }, accessToken);
       }
 
       setMessage("Paramètres mis à jour avec succès !");
@@ -116,18 +116,22 @@ export default function AdminSettings() {
   };
 
   const handleDeleteLogo = async () => {
-    const token = localStorage.getItem("token");
-    const response = await fetch("http://localhost:5000/api/admin/settings/logo", {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    try {
+      const response = await authFetch("/admin/settings/logo", {
+        method: "DELETE"
+      }, accessToken);
 
-    const data = await response.json();
-    if (response.ok) {
-      setSettings(prev => ({ ...prev, logo: data.logo }));
-      setMessage("Logo supprimé avec succès.");
-    } else {
-      setMessage("Erreur lors de la suppression du logo.");
+      const data = await response.json();
+
+      if (response.ok) {
+        setSettings(prev => ({ ...prev, logo: data.logo }));
+        setMessage("Logo supprimé avec succès.");
+      } else {
+        setMessage("Erreur lors de la suppression du logo.");
+      }
+    } catch (err) {
+      console.error("❌ Erreur pendant la suppression du logo :", err);
+      setMessage("Erreur réseau lors de la suppression.");
     }
   };
 
