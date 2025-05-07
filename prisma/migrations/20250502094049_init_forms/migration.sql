@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `block` ADD COLUMN `formId` INTEGER NULL;
+
+-- AddForeignKey
+ALTER TABLE `Block` ADD CONSTRAINT `Block_formId_fkey` FOREIGN KEY (`formId`) REFERENCES `Form`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

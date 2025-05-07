@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
+import cron from "node-cron";
 import authRoutes from "./routes/auth.js"
 import { verifyToken, isAdmin } from "./middleware/authMiddleware.js"
 import settingsRoutes from "./routes/settings.js"
@@ -8,9 +9,10 @@ import pagesRoutes from "./routes/pages.js"
 import blocksRoutes from "./routes/blocks.js"
 import navigationRoutes from "./routes/navigation.js"
 import uploadRoutes from "./routes/upload.js";
+import formRoutes from "./routes/forms.js";
+import mailSettingsRoutes from "./routes/mailSettings.js"
 import { PrismaClient } from "@prisma/client"
 import cookieParser from "cookie-parser"
-import refreshTokenRoutes from "./routes/refreshToken.js"
 
 const prisma = new PrismaClient()
 
@@ -31,17 +33,32 @@ app.use("/api", uploadRoutes);
 app.use("/uploads", express.static("public/uploads"));
 
 // Routes existantes
-app.use("/api/refresh-token", refreshTokenRoutes)
 app.use("/api/auth", authRoutes)
 app.use("/api/admin/settings", settingsRoutes)
 app.use("/api/settings", settingsRoutes)
 app.use("/api/pages", pagesRoutes)
 app.use("/api/blocks", blocksRoutes)
 app.use("/api/navigation", navigationRoutes)
+app.use("/api/forms", formRoutes)
+app.use("/api/admin/mail-settings", mailSettingsRoutes)
 
 app.get("/api/admin", verifyToken, isAdmin, (req, res) => {
   res.json({ message: "Bienvenue dans l’admin, accès réservé aux admins !" })
 })
+
+// ➤ Cron job : suppression chaque jour à minuit
+cron.schedule("0 0 * * *", async () => {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  try {
+    const { count } = await prisma.formSubmission.deleteMany({
+      where: { createdAt: { lt: cutoff } }
+    });
+    console.log(`🧹 ${count} ancienne(s) soumission(s) supprimée(s) (avant ${cutoff.toISOString()}).`);
+  } catch (err) {
+    console.error("❌ Erreur nettoyage des soumissions :", err);
+  }
+});
+
 
 const createHomePageIfNotExists = async () => {
   const existingHomePage = await prisma.page.findFirst({

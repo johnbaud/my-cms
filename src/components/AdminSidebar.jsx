@@ -8,6 +8,8 @@ export default function AdminSidebar() {
   const location = useLocation();
   const { logout } = useAuth(); // 🔐 Utilise le AuthContext
   const [isExpanded, setIsExpanded] = useState(true);
+  const { user, loginTime } = useAuth();
+
 
   const handleLogout = async () => {
     await logout(); // ✅ Appelle la méthode de déconnexion centralisée
@@ -86,6 +88,15 @@ export default function AdminSidebar() {
           </Link>
         </li>
         <li className="nav-item mb-2">
+          <Link className={getNavLinkClass("/admin/form-submissions")} to="/admin/form-submissions">
+            <FileText
+              size={20}
+              className={isExpanded ? "me-2" : "d-block mx-auto"}
+            />{" "}
+            {isExpanded && "Soumissions des formulaires"}
+          </Link>
+        </li>
+        <li className="nav-item mb-2">
           <a
             href="/"
             target="_blank"
@@ -102,9 +113,12 @@ export default function AdminSidebar() {
       </ul>
 
       <div className="mt-auto">
-        <p className={`text-white-50 ${isExpanded ? "" : "d-none"}`}>
-          Connecté à l’espace admin
-        </p>
+        {user && (
+          <p className="text-white-50 small mt-3">
+            Connecté·e en tant que <strong>{user.email}</strong><br />
+            depuis <strong>{loginTime}</strong>
+          </p>
+        )}
         <button className="btn btn-danger w-100 mt-3" onClick={handleLogout}>
           <LogOut
             size={20}

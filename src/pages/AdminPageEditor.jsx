@@ -23,7 +23,18 @@ export default function AdminPageEditor() {
       .then((res) => res.json())
       .then((data) => {
         setPage(data);
-        setBlocks(data.blocks || []);
+        const parsedBlocks = (data.blocks || []).map((block) => {
+          let parsedContent = block.content;
+          try {
+            if (typeof block.content === "string") {
+              parsedContent = JSON.parse(block.content);
+            }
+          } catch (e) {
+            console.warn(`❌ Impossible de parser le bloc ID ${block.id}`, e);
+          }
+          return { ...block, content: parsedContent };
+        });
+        setBlocks(parsedBlocks);
       })
       .catch(() => navigate("/admin/pages"));
   }, [pageId, navigate, accessToken]);
@@ -34,23 +45,25 @@ export default function AdminPageEditor() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: newBlockType,
-        content: newBlockContent,
+        content: newBlockContent, // objet JS structuré
         order: blocks.length,
       }),
     }, accessToken);
-
+  
     if (response.ok) {
       const newBlock = await response.json();
       setBlocks((prev) => [...prev, newBlock]);
       setNewBlockContent("");
     }
-  };
+  };  
 
   const handleUpdateBlock = async (blockId, newContent) => {
+    const contentToSend = typeof newContent === "string" ? newContent : JSON.stringify(newContent);
+
     const response = await authFetch(`/pages/blocks/${blockId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: newContent }),
+      body: JSON.stringify({ content: contentToSend }),
     }, accessToken);
 
     if (response.ok) {
@@ -156,6 +169,7 @@ export default function AdminPageEditor() {
                 <option value="text">Texte</option>
                 <option value="image">Image</option>
                 <option value="button">Bouton</option>
+                <option value="form">Formulaire</option>
               </select>
             </div>
             <div className="mb-3">

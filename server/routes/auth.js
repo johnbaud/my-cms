@@ -35,38 +35,45 @@ router.post("/login", async (req, res) => {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ message: "Mot de passe incorrect." });
 
-    // Access token = court (15min)
+    // 🧪 1. Générer l'access token
     const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" } // temporairement court pour test
     );
 
-    // Refresh token = long (7j)
+    // 🔍 2. Décoder pour obtenir la date d'expiration (timestamp en secondes)
+    const decoded = jwt.decode(accessToken);
+
+    // 🔐 3. Créer le refresh token
     const refreshToken = jwt.sign(
       { id: user.id },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Envoi du refresh token dans un cookie HttpOnly
+    // 🍪 4. Envoyer le refresh token en cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Access token renvoyé au client
+    // 📦 5. Envoyer le token + expiration + infos utiles
     res.json({
       token: accessToken,
+      expiresAt: decoded.exp, // <- timestamp UNIX en secondes
+      email: user.email,
       role: user.role
     });
+
   } catch (error) {
     console.error("Erreur login :", error);
     res.status(500).json({ message: "Erreur serveur." });
   }
 });
+
 // 🔁 Rafraîchir le token
 router.post("/refresh-token", async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
@@ -84,8 +91,13 @@ router.post("/refresh-token", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
-
-    res.json({ accessToken }); // renvoi uniquement le nouveau access token
+    const decodedExpire = jwt.decode(accessToken);
+    res.json({ 
+      accessToken,
+      email: user.email,
+      role: user.role,
+      expiresAt: decodedExpire.exp * 1000
+     });
   } catch (err) {
     return res.status(403).json({ message: "Refresh token invalide." });
   }

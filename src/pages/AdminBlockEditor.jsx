@@ -21,7 +21,16 @@ export default function AdminBlockEditor() {
         if (!res.ok) throw new Error();
         const data = await res.json();
         setBlock(data);
-        setContent(data.content);
+        let parsedContent = data.content;
+        if (typeof parsedContent === "string") {
+          try {
+            parsedContent = JSON.parse(parsedContent);
+          } catch (err) {
+            console.warn("⚠️ Échec du parsing du contenu :", err);
+          }
+        }
+        setBlock(data);
+        setContent(parsedContent);
       } catch (err) {
         navigate("/admin/blocks");
       }
@@ -31,10 +40,12 @@ export default function AdminBlockEditor() {
   }, [blockId, navigate, accessToken]);
 
   const handleSave = async () => {
+    const contentToSend = typeof content === "string" ? content : JSON.stringify(content);
+
     const response = await authFetch(`/blocks/${blockId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content: contentToSend }),
     }, accessToken);
 
     if (response.ok) {

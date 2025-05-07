@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+import FormBlock from "../components/blocks/FormBlock";
+
 
 export default function PageRenderer({ pageId }) {
   const [blocks, setBlocks] = useState([])
@@ -90,7 +92,17 @@ export default function PageRenderer({ pageId }) {
         return <p>⚠️ Erreur de rendu du bouton</p>;
       }
     }
-
+    if (block.type === "form") {
+      try {
+        const parsedContent = typeof block.content === "string"
+          ? JSON.parse(block.content)
+          : block.content;
+        return <FormBlock content={parsedContent} />;
+      } catch (e) {
+        return <p>⚠️ Erreur de lecture du formulaire</p>;
+      }
+    }
+       
     return <p>{block.content}</p>
   }
 

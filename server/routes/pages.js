@@ -45,24 +45,66 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
 
 // 🔹 Ajouter un bloc à une page
 router.post("/:pageId/blocks", verifyToken, isAdmin, async (req, res) => {
-  const { type, content, order } = req.body
-  const { pageId } = req.params
-  console.log("🪵 Reçu pour création de bloc :", { type, content, order, pageId })
+  const { type, content, order } = req.body;
+  const { pageId } = req.params;
+
   try {
+    let blockContent = content;
+
+    // Si c'est un formulaire → on crée la structure Form + FormField en base
+    if (type === "form" && typeof content === "object") {
+      const { title, submitLabel, successMessage, emailTo, storeInDatabase = true, fields = [] } = content;
+
+      const form = await prisma.form.create({
+        data: {
+          title,
+          slug: `form-${Date.now()}`, // ou une logique de slug propre
+          submitLabel,
+          successMessage,
+          emailTo,
+          storeInDatabase,
+          fields: {
+            create: fields.map((f, index) => ({
+              label: f.label,
+              name: f.name,
+              type: f.type,
+              required: f.required,
+              placeholder: f.placeholder,
+              order: index,
+            })),
+          },
+        },
+        include: { fields: true },
+      });
+
+      // Mise à jour du contenu du bloc pour qu’il référence le formId
+      blockContent = {
+        formId: form.id,
+        title,
+        submitLabel,
+        successMessage,
+        emailTo,
+        storeInDatabase,
+        fields: form.fields, // utile pour affichage direct
+      };
+    }
+
     const newBlock = await prisma.block.create({
       data: {
         type,
-        content,
+        content: typeof blockContent === "string" ? blockContent : JSON.stringify(blockContent),
         order,
-        page: { connect: { id: parseInt(pageId) } }
-      }
-    })
-    res.json(newBlock)
+        page: { connect: { id: parseInt(pageId) } },
+      },
+    });
+
+    res.json(newBlock);
   } catch (error) {
-    console.error("❌ Erreur lors de la création du bloc :", error); // 🔍 on affiche ici le vrai message
+    console.error("❌ Erreur lors de la création du bloc :", error);
     res.status(500).json({ message: "Erreur serveur.", error: error.message });
   }
-})
+});
+
 // 🔹 Récupérer une page avec ses blocs
 router.get("/:pageId", async (req, res) => {
   try {
@@ -105,21 +147,89 @@ router.delete("/:pageId", verifyToken, isAdmin, async (req, res) => {
 
 // 🔹 Modifier un bloc
 router.put("/blocks/:blockId", verifyToken, isAdmin, async (req, res) => {
-  const { content } = req.body
-  const { blockId } = req.params
-  console.log("Contenu reçu pour le bloc :", content)
+  const { content } = req.body;
+  const { blockId } = req.params;
 
   try {
+    // 1. Récupère le bloc actuel
+    const currentBlock = await prisma.block.findUnique({
+      where: { id: parseInt(blockId) },
+    });
+
+    if (!currentBlock) {
+      return res.status(404).json({ message: "Bloc non trouvé." });
+    }
+
+    let finalContent = content;
+
+    // 2. Si c'est un formulaire → on met aussi à jour le Form lié
+    if (currentBlock.type === "form") {
+      const parsedContent = typeof content === "string" ? JSON.parse(content) : content;
+      const {
+        formId,
+        title,
+        submitLabel,
+        successMessage,
+        emailTo,
+        storeInDatabase,
+        fields = [],
+      } = parsedContent;
+
+      if (!formId) {
+        return res.status(400).json({ message: "formId manquant dans le contenu." });
+      }
+
+      // 🔁 Supprime tous les anciens champs liés
+      await prisma.formField.deleteMany({ where: { formId } });
+
+      // 🛠 Met à jour le formulaire
+      await prisma.form.update({
+        where: { id: formId },
+        data: {
+          title,
+          submitLabel,
+          successMessage,
+          emailTo,
+          storeInDatabase,
+          fields: {
+            create: fields.map((f, index) => ({
+              label: f.label,
+              name: f.name,
+              type: f.type,
+              required: f.required,
+              placeholder: f.placeholder,
+              order: index,
+            })),
+          },
+        },
+      });
+
+      // ✅ Contenu final : on garde les champs pour affichage immédiat
+      finalContent = {
+        formId,
+        title,
+        submitLabel,
+        successMessage,
+        emailTo,
+        storeInDatabase,
+        fields,
+      };
+    }
+
     const updatedBlock = await prisma.block.update({
       where: { id: parseInt(blockId) },
-      data: { content }
-    })
-    res.json(updatedBlock)
+      data: {
+        content: typeof finalContent === "string" ? finalContent : JSON.stringify(finalContent),
+      },
+    });
+
+    res.json(updatedBlock);
   } catch (error) {
-    console.log("❌ Erreur lors de la mise à jour :", error)
-    res.status(500).json({ message: "Erreur serveur." })
+    console.error("❌ Erreur lors de la mise à jour du bloc formulaire :", error);
+    res.status(500).json({ message: "Erreur serveur." });
   }
-})
+});
+
 
 // 🔹 Supprimer un bloc
 router.delete("/blocks/:blockId", verifyToken, isAdmin, async (req, res) => {

@@ -34,18 +34,17 @@ model Settings {
   navAlignment String   @default("left")
   navHeight    Int      @default(40)
   navBgColor   String   @default("#ffffff")
-  navTextColor     String  @default("#000000")
+  navTextColor String   @default("#000000")
   createdAt    DateTime @default(now())
 
   // Footer
   footerBgColor   String  @default("#000000")
-  footerTextColor  String  @default("#ffffff")
+  footerTextColor String  @default("#ffffff")
   footerAlignment String  @default("center")
   showFooterLinks Boolean @default(false)
 
   // Liste des extensions autorisées pour l’upload
   allowedFileExtensions String @default("jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4")
-
 }
 
 model Page {
@@ -66,6 +65,8 @@ model Block {
   order   Int
   pageId  Int
   page    Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  formId  Int?
+  form    Form?  @relation("FormBlocks", fields: [formId], references: [id], onDelete: SetNull)
 }
 
 model NavigationLink {
@@ -83,4 +84,51 @@ model NavigationLink {
   page     Page?            @relation(fields: [pageId], references: [id], onDelete: SetNull)
 
   @@unique([parentId, position]) // Assure que les positions sont uniques par parent
+}
+
+model Form {
+  id              Int              @id @default(autoincrement())
+  slug            String           @unique // Pour le retrouver facilement
+  title           String
+  submitLabel     String
+  successMessage  String
+  emailTo         String?
+  storeInDatabase Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  fields          FormField[] // Liste des champs associés
+  submissions     FormSubmission[]
+  blocks          Block[]          @relation("FormBlocks")
+}
+
+model FormField {
+  id          Int     @id @default(autoincrement())
+  formId      Int
+  form        Form    @relation(fields: [formId], references: [id], onDelete: Cascade)
+  label       String
+  name        String
+  type        String // text, email, textarea, checkbox, etc.
+  required    Boolean @default(false)
+  placeholder String?
+  order       Int // pour l’ordre d’affichage
+}
+
+model FormSubmission {
+  id        Int      @id @default(autoincrement())
+  formId    Int
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  data      Json // les réponses brutes
+  emailSent Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model MailSettings {
+  id               Int      @id @default(autoincrement())
+  host             String
+  port             Int
+  user             String
+  pass             String
+  fromAddress      String
+  defaultRecipient String?
+  updatedAt        DateTime @updatedAt
 }

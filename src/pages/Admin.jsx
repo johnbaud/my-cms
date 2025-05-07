@@ -61,6 +61,11 @@ export default function Admin() {
                 <FileText size={20} className="me-2" /> Gérer les blocks
               </Link>
             </li>
+            <li className="mt-2">
+              <Link to="/admin/form-submissions" className="btn btn-success">
+                <FileText size={20} className="me-2" /> Soumissions des formulaires
+              </Link>
+            </li>
           </ul>
         </nav>
 

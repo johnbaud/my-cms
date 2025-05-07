@@ -12,6 +12,8 @@ import AdminBlocks from "./pages/AdminBlocks";
 import AdminUploads from "./pages/AdminUploads";
 import AdminPageEditor from "./pages/AdminPageEditor";
 import AdminBlockEditor from "./pages/AdminBlockEditor";
+import AdminFormsSubmissions from "./pages/AdminFormsSubmissions";
+
 
 import { useEffect, useState } from "react";
 
@@ -84,6 +86,8 @@ export default function App() {
         <Route path="/admin/pages/:pageId" element={<AdminPageEditor />} />
         <Route path="/admin/blocks" element={<AdminBlocks />} />
         <Route path="/admin/blocks/:blockId" element={<AdminBlockEditor />} />
+        <Route path="/admin/forms/" element={<AdminBlockEditor />} />
+        <Route path="/admin/form-submissions" element={<AdminFormsSubmissions />} />
       </Route>
 
       {/* 🔹 Page 404 */}
