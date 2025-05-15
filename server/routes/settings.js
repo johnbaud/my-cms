@@ -25,8 +25,11 @@ router.get("/", verifyToken, isAdmin, async (req, res) => {
       footerTextColor: settings?.footerTextColor || "#ffffff",
       footerAlignment: settings?.footerAlignment || "center",
       showFooterLinks: settings?.showFooterLinks ?? true,
-      allowedFileExtensions: settings?.allowedFileExtensions?.split(",") || ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf", "zip", "mp4"]
-
+      allowedFileExtensions: settings?.allowedFileExtensions?.split(",") || ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf", "zip", "mp4"],
+      defaultTitleSuffix: settings?.defaultTitleSuffix || "",
+      defaultMetaKeywords: settings?.defaultMetaKeywords || "",
+      defaultMetaImage: settings?.defaultMetaImage || "",
+      defaultRobots: settings?.defaultRobots || ""
     })
   } catch (error) {
     console.error("❌ Erreur lors de la récupération des paramètres :", error)
@@ -50,8 +53,19 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
     footerTextColor,
     footerAlignment,
     showFooterLinks,
-    allowedFileExtensions
+    allowedFileExtensions,
+    defaultTitleSuffix,
+    defaultMetaKeywords,
+    defaultMetaImage,
+    defaultRobots
   } = req.body;
+
+  // 👇 Nettoyage et validation des metaKeywords globaux
+  const keywordsArray = String(defaultMetaKeywords || "")
+    .split(',')
+    .map(kw => kw.trim())
+    .filter(kw => kw.length > 0);
+  const cleanedDefaultMetaKeywords = [...new Set(keywordsArray)].join(',');
 
   try {
     let settings = await prisma.settings.findFirst();
@@ -76,7 +90,11 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
           footerTextColor,
           footerAlignment,
           showFooterLinks,
-          allowedFileExtensions: extensionList
+          allowedFileExtensions: extensionList,
+          defaultTitleSuffix,
+          defaultMetaKeywords: cleanedDefaultMetaKeywords,
+          defaultMetaImage,
+          defaultRobots
         }
       });
     } else {
@@ -95,7 +113,11 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
           footerTextColor: "#ffffff",
           footerAlignment: "center",
           showFooterLinks: false,
-          allowedFileExtensions: "jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4"
+          allowedFileExtensions: "jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4",
+          defaultTitleSuffix: "",
+          defaultMetaKeywords: cleanedDefaultMetaKeywords,
+          defaultMetaImage: "",
+          defaultRobots: ""
         }
       });
     }
@@ -140,7 +162,31 @@ router.delete("/logo", verifyToken, isAdmin, async (req, res) => {
 router.get("/public", async (req, res) => {
   try {
     const settings = await prisma.settings.findFirst();
-    res.json(settings);
+    const host = req.get("host").split(":")[0];
+    const titleSuffix = settings?.defaultTitleSuffix
+      ? settings.defaultTitleSuffix
+      : ` | ${host}`;
+    res.json({
+      siteName: settings?.siteName || "Mon Site",
+      logo: settings?.logo || "/assets/default-logo.png",
+      primaryColor: settings?.primaryColor || "#ffffff",
+      showLogo: settings?.showLogo ?? true,
+      showSiteName: settings?.showSiteName ?? true,
+      navAlignment: settings?.navAlignment || "left",
+      navHeight: settings?.navHeight || 40,
+      navBgColor: settings?.navBgColor || "#ffffff",
+      navTextColor: settings?.navTextColor || "#000000",
+      footerBgColor: settings?.footerBgColor || "#000000",
+      footerTextColor: settings?.footerTextColor || "#ffffff",
+      footerAlignment: settings?.footerAlignment || "center",
+      showFooterLinks: settings?.showFooterLinks ?? true,
+      allowedFileExtensions: settings?.allowedFileExtensions?.split(",") || ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf", "zip", "mp4"],
+      defaultTitleSuffix: titleSuffix,
+      defaultMetaKeywords: settings?.defaultMetaKeywords || "",
+      defaultMetaImage: settings?.defaultMetaImage || "",
+      defaultRobots: settings?.defaultRobots || ""
+    });
+
   } catch (error) {
     console.error("Erreur lors de la récupération des paramètres publics :", error);
     res.status(500).json({ message: "Erreur serveur." });

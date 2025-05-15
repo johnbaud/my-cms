@@ -20,7 +20,15 @@ router.get("/public", async (req, res) => {
   try {
     const pages = await prisma.page.findMany({
       where: { isPublished: true },
-      select: { id: true, title: true, slug: true }
+      select: { 
+        id: true,
+        title: true,
+        slug: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        metaImage: true 
+      }
     })
     res.json(pages)
   } catch (error) {
@@ -31,11 +39,20 @@ router.get("/public", async (req, res) => {
 
 // 🔹 Créer une nouvelle page
 router.post("/", verifyToken, isAdmin, async (req, res) => {
-  const { title, slug, isPublished = true } = req.body
+  const { title, slug, isPublished = true, metaTitle, metaDescription, metaKeywords, metaImage, metaRobots } = req.body
 
   try {
     const newPage = await prisma.page.create({
-      data: { title, slug, isPublished }
+      data: { 
+        title,
+        slug,
+        isPublished,
+        metaTitle,
+        metaDescription,
+        metaKeywords,
+        metaImage,
+        metaRobots
+      }
     })
     res.json(newPage)
   } catch (error) {
@@ -283,9 +300,9 @@ router.put("/blocks/:blockId/move", verifyToken, isAdmin, async (req, res) => {
   }
 })
 
-// 🔹 Mettre à jour le titre ou le slug d’une page
+// 🔹 Mettre à jour le titre, slug, SEO d’une page
 router.patch("/:pageId", verifyToken, isAdmin, async (req, res) => {
-  const { title, slug } = req.body
+  const { title, slug, metaTitle, metaDescription, metaKeywords, metaImage, metaRobots } = req.body
   const { pageId } = req.params
 
   try {
@@ -293,7 +310,12 @@ router.patch("/:pageId", verifyToken, isAdmin, async (req, res) => {
       where: { id: parseInt(pageId) },
       data: {
         ...(title && { title }),
-        ...(slug && { slug })
+        ...(slug && { slug }),
+        ...(metaTitle !== undefined && { metaTitle }),
+        ...(metaDescription !== undefined && { metaDescription }),
+        ...(metaKeywords !== undefined && { metaKeywords }),
+        ...(metaImage !== undefined && { metaImage }),
+        ...(metaRobots !== undefined && { metaRobots })
       }
     })
     res.json(updated)

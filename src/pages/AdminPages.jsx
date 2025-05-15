@@ -9,6 +9,11 @@ export default function AdminPages() {
   const [pages, setPages] = useState([]);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [metaKeywords, setMetaKeywords] = useState("");
+  const [metaImage, setMetaImage] = useState("");
+  const [metaRobots, setMetaRobots] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { accessToken } = useAuth();
@@ -25,7 +30,7 @@ export default function AdminPages() {
     const response = await authFetch("/pages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, slug })
+      body: JSON.stringify({ title, slug, metaTitle, metaDescription, metaKeywords, metaImage, metaRobots })
     }, accessToken);
 
     const data = await response.json();
@@ -34,6 +39,11 @@ export default function AdminPages() {
       setMessage("✅ Page créée avec succès !");
       setTitle("");
       setSlug("");
+      setMetaTitle("");
+      setMetaDescription("");
+      setMetaKeywords("");
+      setMetaImage("");
+      setMetaRobots("");      
       const updatedPages = await authFetch("/pages", {}, accessToken).then(res => res.json());
       setPages(updatedPages);
     } else {
@@ -92,6 +102,51 @@ export default function AdminPages() {
           <div className="mb-3">
             <label>Slug (URL)</label>
             <input type="text" className="form-control" value={slug} onChange={(e) => setSlug(e.target.value)} required />
+          </div>
+          <div className="mb-3">
+            <label>Titre SEO (metaTitle)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={metaTitle}
+              onChange={e => setMetaTitle(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label>Description SEO (metaDescription)</label>
+            <textarea
+              className="form-control"
+              rows={2}
+              value={metaDescription}
+              onChange={e => setMetaDescription(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label>Mots-clés (metaKeywords, CSV)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={metaKeywords}
+              onChange={e => setMetaKeywords(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label>Image Open Graph (metaImage, URL)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={metaImage}
+              onChange={e => setMetaImage(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <label>Robots (metaRobots, ex. “index,follow”)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={metaRobots}
+              onChange={e => setMetaRobots(e.target.value)}
+            />
           </div>
           <button type="submit" className="btn btn-primary">
             <Plus size={20} className="me-2" /> Ajouter la page

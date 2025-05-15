@@ -5,6 +5,7 @@ import AdminSidebar from "../components/AdminSidebar";
 import AdminSettingsTabs from "../components/AdminSettingsTabs";
 import { useAuth } from "../context/AuthContext";
 import { authFetch } from "../utils/authFetch";
+import TagsInput from "../components/TagsInput";
 
 // React-Bootstrap
 import { Tab } from "react-bootstrap";
@@ -14,6 +15,7 @@ import GeneralSettings from "../components/AdminSettings/GeneralSettings";
 import NavigationSettings from "../components/AdminSettings/NavigationSettings";
 import FooterSettings from "../components/AdminSettings/FooterSettings";
 import FormulaireSettings from "../components/AdminSettings/FormulaireSettings";
+import SeoGlobalSettings from "../components/AdminSettings/SeoGlobalSettings";
 
 export default function AdminSettings() {
   const { accessToken } = useAuth();
@@ -33,7 +35,8 @@ export default function AdminSettings() {
     footerTextColor: "#ffffff",
     footerAlignment: "center",
     showFooterLinks: true,
-    allowedFileExtensions: []
+    allowedFileExtensions: [],
+    defaultMetaKeywords: [],
   });
   const [mailCfg, setMailCfg] = useState({
     host: "",
@@ -58,7 +61,7 @@ export default function AdminSettings() {
           const ext = Array.isArray(data.allowedFileExtensions)
             ? data.allowedFileExtensions
             : data.allowedFileExtensions?.split(",") || [];
-          setSettings({ ...data, allowedFileExtensions: ext });
+          setSettings({ ...data, allowedFileExtensions: ext, defaultMetaKeywords: data.defaultMetaKeywords ? data.defaultMetaKeywords.split(",").map(k => k.trim()): [] });
         }
       })
       .catch(() => navigate("/login"));
@@ -89,6 +92,7 @@ export default function AdminSettings() {
     e.preventDefault();
     const payload = {
       ...settings,
+      defaultMetaKeywords: settings.defaultMetaKeywords.join(","),
       allowedFileExtensions: settings.allowedFileExtensions.join(",")
     };
     const res = await authFetch(
@@ -202,6 +206,14 @@ export default function AdminSettings() {
                   setMailCfg={setMailCfg}
                   onSave={handleSaveSMTP}
                 />
+              </Tab.Pane>
+
+              <Tab.Pane eventKey="seoGlobal">
+                <SeoGlobalSettings 
+                  settings={settings}
+                  setSettings={setSettings}
+                  onSave={handleSaveSettings}
+                />  
               </Tab.Pane>
             </>
           )}

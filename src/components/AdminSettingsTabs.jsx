@@ -19,6 +19,9 @@ export default function AdminSettingsTabs({ children }) {
         <Nav.Item>
           <Nav.Link eventKey="forms">Formulaires</Nav.Link>
         </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="seoGlobal">SEO global</Nav.Link>
+        </Nav.Item>
       </Nav>
 
       <Tab.Content className="mt-3">

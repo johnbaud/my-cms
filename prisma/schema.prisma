@@ -45,6 +45,12 @@ model Settings {
 
   // Liste des extensions autorisées pour l’upload
   allowedFileExtensions String @default("jpg,jpeg,png,gif,webp,svg,pdf,zip,mp4")
+
+  // SEO global
+  defaultTitleSuffix       String? // Titre par défaut (<title>)
+  defaultMetaKeywords    String? // Mots-clés par défaut (CSV)
+  defaultMetaImage       String? // URL image Open Graph par défaut
+  defaultRobots          String? // ex. "index,follow"
 }
 
 model Page {
@@ -56,6 +62,14 @@ model Page {
   blocks          Block[]
   navigationLinks NavigationLink[]
   isPublished     Boolean          @default(true)
+
+    // SEO spécifiques
+  metaTitle          String?
+  metaDescription    String?
+  metaKeywords       String?
+  metaImage          String?
+  metaRobots         String?   // ex. "noindex,nofollow"
+  
 }
 
 model Block {

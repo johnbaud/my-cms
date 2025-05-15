@@ -5,6 +5,8 @@ import BlockFormFactory from "../components/blocks/BlockFormFactory";
 import { Plus, Edit, Trash2, Save, ArrowLeft, ChevronsUpDown } from "lucide-react";
 import { authFetch } from "../utils/authFetch";
 import { useAuth } from "../context/AuthContext";
+import TagsInput from "../components/TagsInput";
+
 
 export default function AdminPageEditor() {
   const { pageId } = useParams();
@@ -17,12 +19,18 @@ export default function AdminPageEditor() {
   const [newBlockContent, setNewBlockContent] = useState("");
   const [message, setMessage] = useState("");
   const [expandedBlockId, setExpandedBlockId] = useState(null);
+  const [keywords, setKeywords] = useState([]);
 
   useEffect(() => {
     authFetch(`/pages/${pageId}`, {}, accessToken)
       .then((res) => res.json())
       .then((data) => {
         setPage(data);
+        setKeywords(
+          data.metaKeywords
+            ? data.metaKeywords.split(",").map(k => k.trim())
+            : []
+        );        
         const parsedBlocks = (data.blocks || []).map((block) => {
           let parsedContent = block.content;
           try {
@@ -100,7 +108,7 @@ export default function AdminPageEditor() {
     const response = await authFetch(`/pages/${pageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: page.title, slug: page.slug }),
+      body: JSON.stringify({ title: page.title, slug: page.slug, metaTitle: page.metaTitle, metaDescription: page.metaDescription,metaKeywords: keywords.join(","), metaImage: page.metaImage, metaRobots: page.metaRobots}),
     }, accessToken);
 
     if (response.ok) {
@@ -135,6 +143,50 @@ export default function AdminPageEditor() {
               <div className="mb-2">
                 <label className="form-label">Slug</label>
                 <input type="text" className="form-control mt-2" value={page.slug} onChange={(e) => setPage({ ...page, slug: e.target.value })} />
+              </div>
+              <div className="mb-3">
+                <label>Titre SEO (metaTitle)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={page.metaTitle || ""}
+                  onChange={e => setPage({ ...page, metaTitle: e.target.value })}
+                />
+              </div>
+              <div className="mb-3">
+                <label>Description SEO (metaDescription)</label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  value={page.metaDescription || ""}
+                  onChange={e => setPage({ ...page, metaDescription: e.target.value })}
+                />
+              </div>
+              <div className="mb-3">
+                <label>Mots-clés (metaKeywords)</label>
+                <TagsInput
+                  value={keywords}
+                  onChange={setKeywords}
+                  placeholder="Appuie sur Entrée ou , pour ajouter"
+                />
+              </div>
+              <div className="mb-3">
+                <label>Image Open Graph (metaImage)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={page.metaImage || ""}
+                  onChange={e => setPage({...page, metaImage: e.target.value })}
+                />
+              </div>
+              <div className="mb-3">
+                <label>Robots (metaRobots)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={page.metaRobots || ""}
+                  onChange={e => setPage({ ...page, metaRobots: e.target.value })}
+                />
               </div>
               <button className="btn btn-primary mt-2"><Save size={16} /> Enregistrer</button>
             </form>
