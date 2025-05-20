@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Save, ArrowLeft, ChevronsUpDown } from "lucide-reac
 import { authFetch } from "../utils/authFetch";
 import { useAuth } from "../context/AuthContext";
 import TagsInput from "../components/TagsInput";
+import { Form } from "react-bootstrap";
 
 
 export default function AdminPageEditor() {
@@ -20,12 +21,14 @@ export default function AdminPageEditor() {
   const [message, setMessage] = useState("");
   const [expandedBlockId, setExpandedBlockId] = useState(null);
   const [keywords, setKeywords] = useState([]);
+  const [robots, setRobots] = useState("index,follow");
 
   useEffect(() => {
     authFetch(`/pages/${pageId}`, {}, accessToken)
       .then((res) => res.json())
       .then((data) => {
         setPage(data);
+        setRobots(data.metaRobots || "index,follow");
         setKeywords(
           data.metaKeywords
             ? data.metaKeywords.split(",").map(k => k.trim())
@@ -105,10 +108,16 @@ export default function AdminPageEditor() {
   };
 
   const handleUpdatePageMeta = async () => {
+    const payload = {
+      title: page.title,
+      slug: page.slug,
+      metaKeywords: keywords.join(","),
+      metaRobots: robots,
+    };
     const response = await authFetch(`/pages/${pageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: page.title, slug: page.slug, metaTitle: page.metaTitle, metaDescription: page.metaDescription,metaKeywords: keywords.join(","), metaImage: page.metaImage, metaRobots: page.metaRobots}),
+      body: JSON.stringify( payload),
     }, accessToken);
 
     if (response.ok) {
@@ -179,15 +188,37 @@ export default function AdminPageEditor() {
                   onChange={e => setPage({...page, metaImage: e.target.value })}
                 />
               </div>
-              <div className="mb-3">
-                <label>Robots (metaRobots)</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={page.metaRobots || ""}
-                  onChange={e => setPage({ ...page, metaRobots: e.target.value })}
+              <Form.Group className="mb-3">
+                <Form.Label>Indexation</Form.Label>
+                <Form.Check
+                  type="switch"
+                  id="robots-index"
+                  label={robots.includes("index") ? "Indexé" : "NoIndexé"}
+                  checked={robots.includes("index")}
+                  onChange={() => {
+                    const parts = robots.split(",");
+                    const has = parts.includes("index");
+                    const newParts = has ? parts.filter(p => p !== "index") : [...parts, "index"];
+                    setRobots(newParts.join(","));
+                  }}
                 />
-              </div>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Suivi des liens</Form.Label>
+                <Form.Check
+                  type="switch"
+                  id="robots-follow"
+                  label={robots.includes("follow") ? "Follow" : "NoFollow"}
+                  checked={robots.includes("follow")}
+                  onChange={() => {
+                    const parts = robots.split(",");
+                    const has = parts.includes("follow");
+                    const newParts = has ? parts.filter(p => p !== "follow") : [...parts, "follow"];
+                    setRobots(newParts.join(","));
+                  }}
+                />
+              </Form.Group>
               <button className="btn btn-primary mt-2"><Save size={16} /> Enregistrer</button>
             </form>
 

@@ -58,8 +58,19 @@ export default function PageRenderer({ pageId }) {
   const title       = titleSuffix ? `${baseTitle}${titleSuffix}` : baseTitle
   const description = (pageMeta.description && pageMeta.description.trim()) || extractSnippetFromBlocks(blocks) || ""
   const keywords    = pageMeta.keywords        || settings.defaultMetaKeywords    || ""
-  const image       = pageMeta.image           || settings.defaultMetaImage       || ""
   const robots      = pageMeta.robots          || settings.defaultRobots           || "index,follow"
+  let ogImage = pageMeta.image || ""
+  if (!ogImage) {
+    // cherche premier bloc image si pas de metaImage
+    const firstImageBlock = blocks.find(b => b.type === "image")
+    if (firstImageBlock) {
+      ogImage = firstImageBlock.content
+    }
+  }
+  if (!ogImage) {
+    ogImage = settings.defaultMetaImage || ""
+  }
+
 
     // ─── FONCTION DE RENDER DES BLOCS ──────────────────
   const renderBlock = (block) => {
@@ -163,14 +174,14 @@ export default function PageRenderer({ pageId }) {
         {description && <meta property="og:description" content={description} />}
         <meta property="og:type"      content="website" />
         <meta property="og:url"       content={window.location.href} />
-        {image       && <meta property="og:image" content={image} />}
+        {ogImage     && <meta property="og:image" content={ogImage} />}
         <meta property="og:site_name" content={settings.siteName} />
 
         {/* Twitter Card */}
         <meta name="twitter:card"        content="summary_large_image" />
         <meta name="twitter:title"       content={title} />
         {description && <meta name="twitter:description" content={description} />}
-        {image       && <meta name="twitter:image"       content={image} />}
+        {ogImage     && <meta name="twitter:image"       content={ogImage} />}
       </Helmet>
 
       {/* ─── CONTENU (ta logique de rendu des blocs) ───────────────────────────*/}

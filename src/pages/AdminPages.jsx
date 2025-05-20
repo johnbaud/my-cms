@@ -4,6 +4,8 @@ import AdminSidebar from "../components/AdminSidebar";
 import { FileText, Plus, Edit, Trash2 } from "lucide-react";
 import { authFetch } from "../utils/authFetch";
 import { useAuth } from "../context/AuthContext";
+import { Form, Button } from "react-bootstrap";
+import TagsInput from "../components/TagsInput";
 
 export default function AdminPages() {
   const [pages, setPages] = useState([]);
@@ -13,7 +15,7 @@ export default function AdminPages() {
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
   const [metaImage, setMetaImage] = useState("");
-  const [metaRobots, setMetaRobots] = useState("");
+  const [robots, setRobots] = useState("index,follow");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { accessToken } = useAuth();
@@ -26,11 +28,15 @@ export default function AdminPages() {
 
   const handleCreatePage = async (e) => {
     e.preventDefault();
-
+    if (!robots.includes("index") && !robots.includes("noindex")) {
+      setMessage("❌ Veuillez choisir une directive d'indexation.");
+      return;
+    }
+    const payload = { title, slug, metaTitle, metaDescription, metaKeywords: metaKeywords.join(","), metaImage, metaRobots: robots };
     const response = await authFetch("/pages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, slug, metaTitle, metaDescription, metaKeywords, metaImage, metaRobots })
+      body: JSON.stringify(payload)
     }, accessToken);
 
     const data = await response.json();
@@ -43,7 +49,7 @@ export default function AdminPages() {
       setMetaDescription("");
       setMetaKeywords("");
       setMetaImage("");
-      setMetaRobots("");      
+      setRobots("index,follow");      
       const updatedPages = await authFetch("/pages", {}, accessToken).then(res => res.json());
       setPages(updatedPages);
     } else {
@@ -139,15 +145,37 @@ export default function AdminPages() {
               onChange={e => setMetaImage(e.target.value)}
             />
           </div>
-          <div className="mb-3">
-            <label>Robots (metaRobots, ex. “index,follow”)</label>
-            <input
-              type="text"
-              className="form-control"
-              value={metaRobots}
-              onChange={e => setMetaRobots(e.target.value)}
+          <Form.Group className="mb-3">
+            <Form.Label>Indexation</Form.Label>
+            <Form.Check
+              type="switch"
+              id="robots-index-create"
+              label={robots.includes("index") ? "Indexé" : "NoIndexé"}
+              checked={robots.includes("index")}
+              onChange={() => {
+                const parts = robots.split(",");
+                const has = parts.includes("index");
+                const newParts = has ? parts.filter(p => p !== "index") : [...parts, "index"];
+                setRobots(newParts.join(","));
+              }}
             />
-          </div>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Suivi des liens</Form.Label>
+            <Form.Check
+              type="switch"
+              id="robots-follow-create"
+              label={robots.includes("follow") ? "Follow" : "NoFollow"}
+              checked={robots.includes("follow")}
+              onChange={() => {
+                const parts = robots.split(",");
+                const has = parts.includes("follow");
+                const newParts = has ? parts.filter(p => p !== "follow") : [...parts, "follow"];
+                setRobots(newParts.join(","));
+              }}
+            />
+          </Form.Group>
           <button type="submit" className="btn btn-primary">
             <Plus size={20} className="me-2" /> Ajouter la page
           </button>
