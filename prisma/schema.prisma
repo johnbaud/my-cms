@@ -51,6 +51,9 @@ model Settings {
   defaultMetaKeywords    String? // Mots-clés par défaut (CSV)
   defaultMetaImage       String? // URL image Open Graph par défaut
   defaultRobots          String? // ex. "index,follow"
+  
+  //Themes
+  selectedTheme         String?
 }
 
 model Page {

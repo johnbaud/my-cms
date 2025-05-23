@@ -29,7 +29,8 @@ router.get("/", verifyToken, isAdmin, async (req, res) => {
       defaultTitleSuffix: settings?.defaultTitleSuffix || "",
       defaultMetaKeywords: settings?.defaultMetaKeywords || "",
       defaultMetaImage: settings?.defaultMetaImage || "",
-      defaultRobots: settings?.defaultRobots || ""
+      defaultRobots: settings?.defaultRobots || "",
+      selectedTheme: settings?.selectedTheme || "modern-light"
     })
   } catch (error) {
     console.error("❌ Erreur lors de la récupération des paramètres :", error)
@@ -57,7 +58,8 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
     defaultTitleSuffix,
     defaultMetaKeywords,
     defaultMetaImage,
-    defaultRobots
+    defaultRobots,
+    selectedTheme 
   } = req.body;
 
   // 👇 Nettoyage et validation des metaKeywords globaux
@@ -94,7 +96,8 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
           defaultTitleSuffix,
           defaultMetaKeywords: cleanedDefaultMetaKeywords,
           defaultMetaImage,
-          defaultRobots
+          defaultRobots,
+          selectedTheme 
         }
       });
     } else {
@@ -117,7 +120,8 @@ router.post("/", verifyToken, isAdmin, async (req, res) => {
           defaultTitleSuffix: "",
           defaultMetaKeywords: cleanedDefaultMetaKeywords,
           defaultMetaImage: "",
-          defaultRobots: ""
+          defaultRobots: "",
+          selectedTheme: "modern-light"
         }
       });
     }
@@ -184,7 +188,8 @@ router.get("/public", async (req, res) => {
       defaultTitleSuffix: titleSuffix,
       defaultMetaKeywords: settings?.defaultMetaKeywords || "",
       defaultMetaImage: settings?.defaultMetaImage || "",
-      defaultRobots: settings?.defaultRobots || ""
+      defaultRobots: settings?.defaultRobots || "",
+      selectedTheme: settings?.selectedTheme || "modern-light"
     });
 
   } catch (error) {

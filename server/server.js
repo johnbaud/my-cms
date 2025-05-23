@@ -11,6 +11,7 @@ import navigationRoutes from "./routes/navigation.js"
 import uploadRoutes from "./routes/upload.js";
 import formRoutes from "./routes/forms.js";
 import mailSettingsRoutes from "./routes/mailSettings.js"
+import themesRoutes from "./routes/themes.js";
 import { PrismaClient } from "@prisma/client"
 import cookieParser from "cookie-parser"
 
@@ -41,7 +42,7 @@ app.use("/api/blocks", blocksRoutes)
 app.use("/api/navigation", navigationRoutes)
 app.use("/api/forms", formRoutes)
 app.use("/api/admin/mail-settings", mailSettingsRoutes)
-
+app.use("/api/admin/themes", themesRoutes);
 app.get("/api/admin", verifyToken, isAdmin, (req, res) => {
   res.json({ message: "Bienvenue dans l’admin, accès réservé aux admins !" })
 })

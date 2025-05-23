@@ -49,6 +49,7 @@ export default function AdminSettings() {
   const [footerLinks, setFooterLinks] = useState([]);
   const [message, setMessage] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [themeOptions, setThemeOptions] = useState([]); 
 
   //  ─── FETCH INITIAL ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -85,6 +86,12 @@ export default function AdminSettings() {
       .then(res => res.json())
       .then(setFooterLinks)
       .catch(err => console.error("⚠️ fetch footer links:", err));
+
+    // 5) Themes
+    authFetch("/admin/themes", {}, accessToken)
+      .then(res => res.json())
+      .then(setThemeOptions)
+      .catch(err => console.error("⚠️ fetch themes:", err));  
   }, [accessToken, navigate, refreshTrigger]);
 
   //  ─── HANDLERS ────────────────────────────────────────────────────────────────
@@ -177,6 +184,7 @@ export default function AdminSettings() {
                   onSave={handleSaveSettings}
                   onFileChange={handleFileChange}
                   onDeleteLogo={handleDeleteLogo}
+                  themeOptions={themeOptions}
                 />
               </Tab.Pane>
 

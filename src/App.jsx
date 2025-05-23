@@ -3,6 +3,7 @@ import SiteLayout from "./components/SiteLayout";
 import NotFoundPage from "./pages/NotFoundPage";
 import PageRenderer from "./pages/PageRenderer";
 import RequireAuth from "./components/RequireAuth";
+import ThemeLoader from "./components/ThemeLoader";
 
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
@@ -13,7 +14,6 @@ import AdminUploads from "./pages/AdminUploads";
 import AdminPageEditor from "./pages/AdminPageEditor";
 import AdminBlockEditor from "./pages/AdminBlockEditor";
 import AdminFormsSubmissions from "./pages/AdminFormsSubmissions";
-
 
 import { useEffect, useState } from "react";
 
@@ -63,35 +63,38 @@ export default function App() {
   if (!settings || !pages || !navLinks || !footerLinks) return <p>Chargement...</p>;
 
   return (
-    <Routes>
-      {/* 🔹 Routes publiques (site) */}
-      <Route element={<SiteLayout settings={settings} navLinks={navLinks} footerLinks={footerLinks} />}>
-        {homePageId && <Route path="/" element={<PageRenderer pageId={homePageId} />} />}
-        {pages.map((page) =>
-          page.slug !== "" ? (
-            <Route key={page.id} path={`/${page.slug}`} element={<PageRenderer pageId={page.id} />} />
-          ) : null
-        )}
-      </Route>
+    <>
+      <ThemeLoader />
+      <Routes>
+        {/* 🔹 Routes publiques (site) */}
+        <Route element={<SiteLayout settings={settings} navLinks={navLinks} footerLinks={footerLinks} />}>
+          {homePageId && <Route path="/" element={<PageRenderer pageId={homePageId} />} />}
+          {pages.map((page) =>
+            page.slug !== "" ? (
+              <Route key={page.id} path={`/${page.slug}`} element={<PageRenderer pageId={page.id} />} />
+            ) : null
+          )}
+        </Route>
 
-      {/* 🔹 Login accessible sans auth */}
-      <Route path="/login" element={<Login />} />
+        {/* 🔹 Login accessible sans auth */}
+        <Route path="/login" element={<Login />} />
 
-      {/* 🔹 Routes Admin (protégées) */}
-      <Route element={<RequireAuth />}>
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
-        <Route path="/admin/uploads" element={<AdminUploads />} />
-        <Route path="/admin/pages" element={<AdminPages />} />
-        <Route path="/admin/pages/:pageId" element={<AdminPageEditor />} />
-        <Route path="/admin/blocks" element={<AdminBlocks />} />
-        <Route path="/admin/blocks/:blockId" element={<AdminBlockEditor />} />
-        <Route path="/admin/forms/" element={<AdminBlockEditor />} />
-        <Route path="/admin/form-submissions" element={<AdminFormsSubmissions />} />
-      </Route>
+        {/* 🔹 Routes Admin (protégées) */}
+        <Route element={<RequireAuth />}>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/uploads" element={<AdminUploads />} />
+          <Route path="/admin/pages" element={<AdminPages />} />
+          <Route path="/admin/pages/:pageId" element={<AdminPageEditor />} />
+          <Route path="/admin/blocks" element={<AdminBlocks />} />
+          <Route path="/admin/blocks/:blockId" element={<AdminBlockEditor />} />
+          <Route path="/admin/forms/" element={<AdminBlockEditor />} />
+          <Route path="/admin/form-submissions" element={<AdminFormsSubmissions />} />
+        </Route>
 
-      {/* 🔹 Page 404 */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* 🔹 Page 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
   );
 }

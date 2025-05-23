@@ -1,12 +1,14 @@
 import React, { useRef } from "react";
 import { Save } from "lucide-react";
+import { Form } from "react-bootstrap";
 
 export default function GeneralSettings({
   settings,
   setSettings,
   onSave,
   onFileChange,
-  onDeleteLogo
+  onDeleteLogo,
+  themeOptions = []
 }) {
   const fileInputRef = useRef();
 
@@ -63,7 +65,22 @@ export default function GeneralSettings({
           </div>
         )}
       </div>
-
+      <Form.Group className="mb-3">
+        <Form.Label>🎨 Thème du site</Form.Label>
+        <Form.Select
+          value={settings.selectedTheme || ""}
+          onChange={(e) =>
+            setSettings((prev) => ({ ...prev, selectedTheme: e.target.value }))
+          }
+        >
+          <option value="">-- Choisir un thème --</option>
+          {themeOptions.map((theme) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.name}
+            </option>
+          ))}
+        </Form.Select>
+      </Form.Group>
       <div className="mb-3">
         <label>Couleur principale</label>
         <input
