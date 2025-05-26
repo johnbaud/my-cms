@@ -4,10 +4,12 @@ import axios from "axios";
 
 export default function ThemeLoader() {
   const [theme, setTheme] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     // Appel à l'API pour récupérer les paramètres globaux, dont le thème actif
     axios.get("/api/settings").then((res) => {
+      setSettings(res.data);
       const selectedTheme = res.data.selectedTheme || "modern-light";
       import(`../themes/${selectedTheme}/index.js`).then((module) => {
         const themeData = module.default;
@@ -17,7 +19,7 @@ export default function ThemeLoader() {
   }, []);
 
   useEffect(() => {
-    if (!theme) return;
+    if (!theme || !settings) return;
 
     // Injection du fichier CSS
     const link = document.createElement("link");
@@ -25,9 +27,28 @@ export default function ThemeLoader() {
     link.href = theme.cssFile;
     document.head.appendChild(link);
 
+    // Variables de thème personnalisées
+    const vars = {
+      "--primary-color": settings.primaryColor,
+      "--secondary-color": settings.secondaryColor,
+      "--font-family": settings.fontFamily,
+      "--font-size-base": settings.fontSizeBase,
+      "--font-size-h1": settings.fontSizeH1,
+      "--font-size-h2": settings.fontSizeH2,
+      "--font-size-h3": settings.fontSizeH3,
+      "--line-height": settings.lineHeight,
+      "--letter-spacing": settings.letterSpacing,
+      "--text-max-width": settings.textMaxWidth,
+      "--block-spacing": settings.spacingBetweenBlocks,
+      "--radius-base": settings.borderRadius,
+      "--box-shadow": settings.boxShadow ? "0 2px 10px rgba(0,0,0,0.1)" : "none"
+    };
+
     // Injection des variables CSS
-    Object.entries(theme.variables || {}).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(key, value);
+    Object.entries(vars).forEach(([key, value]) => {
+      if (value) {
+        document.documentElement.style.setProperty(key, value);
+      }
     });
 
     // Injection des scripts JS
@@ -46,7 +67,7 @@ export default function ThemeLoader() {
         if (existingScript) document.body.removeChild(existingScript);
       });
     };
-  }, [theme]);
+  }, [theme, settings]);
 
   return null;
 }

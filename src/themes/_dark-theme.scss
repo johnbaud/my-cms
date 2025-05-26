@@ -1,0 +1,56 @@
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #1e1e1e;
+  --font-family: 'Montserrat', sans-serif;
+
+  --font-size-base: 1rem;
+  --font-size-h1: 2.25rem;
+  --font-size-h2: 1.75rem;
+  --font-size-h3: 1.25rem;
+
+  --line-height: 1.6;
+  --letter-spacing: normal;
+  --text-max-width: 65ch;
+
+  --block-spacing: 2rem;
+  --radius-base: 0.5rem;
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+  --text-color: #f1f1f1;
+  --block-bg-color: #2a2a2a;
+}
+
+.block {
+  margin-bottom: var(--block-spacing);
+  padding: var(--global-padding, 1rem);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
+  max-width: var(--text-max-width);
+  border-radius: var(--radius-base);
+  box-shadow: var(--box-shadow);
+  color: var(--text-color);
+  background-color: var(--block-bg-color);
+}
+
+.block h1 {
+  font-size: var(--font-size-h1);
+}
+
+.block h2 {
+  font-size: var(--font-size-h2);
+}
+
+.block h3 {
+  font-size: var(--font-size-h3);
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

@@ -90,7 +90,124 @@ export default function GeneralSettings({
           onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
         />
       </div>
+      <div className="mb-3">
+        <label>Couleur secondaire</label>
+        <input
+          type="color"
+          className="form-control form-control-color"
+          value={settings.secondaryColor}
+          onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
+        />
+      </div>
 
+      <div className="mb-3">
+        <label>Police du site</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.fontFamily}
+          onChange={(e) => setSettings({ ...settings, fontFamily: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Taille du texte (base)</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.fontSizeBase}
+          onChange={(e) => setSettings({ ...settings, fontSizeBase: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Taille H1</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.fontSizeH1}
+          onChange={(e) => setSettings({ ...settings, fontSizeH1: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Taille H2</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.fontSizeH2}
+          onChange={(e) => setSettings({ ...settings, fontSizeH2: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Taille H3</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.fontSizeH3}
+          onChange={(e) => setSettings({ ...settings, fontSizeH3: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Hauteur de ligne</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.lineHeight}
+          onChange={(e) => setSettings({ ...settings, lineHeight: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Espacement entre les lettres</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.letterSpacing}
+          onChange={(e) => setSettings({ ...settings, letterSpacing: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Largeur max. du texte (ex: 65ch)</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.textMaxWidth}
+          onChange={(e) => setSettings({ ...settings, textMaxWidth: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Espacement entre les blocs</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.spacingBetweenBlocks}
+          onChange={(e) => setSettings({ ...settings, spacingBetweenBlocks: e.target.value })}
+        />
+      </div>
+
+      <div className="mb-3">
+        <label>Arrondi des bordures (border-radius)</label>
+        <input
+          type="text"
+          className="form-control"
+          value={settings.borderRadius}
+          onChange={(e) => setSettings({ ...settings, borderRadius: e.target.value })}
+        />
+      </div>
+
+      <Form.Check
+        className="mb-3"
+        type="checkbox"
+        label="Activer l'ombre portée (box-shadow)"
+        checked={!!settings.boxShadow}
+        onChange={(e) => setSettings({ ...settings, boxShadow: e.target.checked })}
+      />
+      
       <div className="mb-3">
         <label>Extensions autorisées pour l’upload</label>
         <select

@@ -26,7 +26,22 @@ model Settings {
   id           Int     @id @default(autoincrement())
   siteName     String
   logo         String? // Stockera l'URL du logo
-  primaryColor String? // Couleur principale
+  primaryColor String? @default("#007bff")
+  secondaryColor        String?  @default("#f8f9fa")
+  fontFamily            String?  @default("Montserrat, sans-serif")
+
+  fontSizeBase          String?  @default("1rem")
+  fontSizeH1            String?  @default("2.25rem")
+  fontSizeH2            String?  @default("1.75rem")
+  fontSizeH3            String?  @default("1.25rem")
+
+  lineHeight            String?  @default("1.6")
+  letterSpacing         String?  @default("normal")
+  textMaxWidth          String?  @default("65ch")
+  
+  spacingBetweenBlocks  String?  @default("2rem")
+  borderRadius          String?  @default("0")
+  boxShadow             Boolean? @default(false)
 
   // Navigattion
   showLogo     Boolean  @default(true)

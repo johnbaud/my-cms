@@ -1,0 +1,53 @@
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #f8f9fa;
+  --font-family: 'Montserrat', sans-serif;
+
+  --font-size-base: 1rem;
+  --font-size-h1: 2.25rem;
+  --font-size-h2: 1.75rem;
+  --font-size-h3: 1.25rem;
+
+  --line-height: 1.6;
+  --letter-spacing: normal;
+  --text-max-width: 65ch;
+
+  --block-spacing: 2rem;
+  --radius-base: 0.5rem;
+  --box-shadow: none;
+}
+
+.block {
+  margin-bottom: var(--block-spacing);
+  padding: var(--global-padding, 1rem);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
+  max-width: var(--text-max-width);
+  border-radius: var(--radius-base);
+  box-shadow: var(--box-shadow);
+  color: var(--text-color, #212529);
+  background-color: var(--block-bg-color, transparent);
+}
+
+.block h1 {
+  font-size: var(--font-size-h1);
+}
+
+.block h2 {
+  font-size: var(--font-size-h2);
+}
+
+.block h3 {
+  font-size: var(--font-size-h3);
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

@@ -1,9 +1,4 @@
-/* src/themes/modern-light/theme.scss */
-:root {
-  --primary-color: #007bff;
-  --secondary-color: #f8f9fa;
-  --font-family: 'Montserrat', sans-serif;
-}
+@import "../_base-theme.scss";
 
 body {
   font-family: var(--font-family);
